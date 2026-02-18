@@ -43,10 +43,40 @@ export default function Practice() {
         fetchQuestion();
     }, [navigate]);
 
-    const onSubmit = (e) => {
+    const [error, setError] = useState('');
+
+    const [result, setResult] = useState(null);
+
+    const onSubmit = async (e) => {
         e.preventDefault();
-        console.log('Submitted answer:', answer);
-        // Submit logic will go here
+
+        if (!answer) {
+            setError('Please enter a number');
+            return;
+        }
+
+        try {
+            setError('');
+            const savedUser = localStorage.getItem('user');
+            const token = localStorage.getItem('token');
+            const parsedUser = JSON.parse(savedUser);
+
+            const response = await axios.post('http://localhost:5000/api/attempt/submit', {
+                studentId: parsedUser.id,
+                base: question.base,
+                exponent: question.exponent,
+                studentAnswer: answer
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            console.log('Submission Result:', response.data);
+            setResult(response.data);
+
+        } catch (err) {
+            console.error('Submission error:', err);
+            setError('Failed to submit answer. Please try again.');
+        }
     };
 
     if (loading) {
@@ -84,6 +114,7 @@ export default function Practice() {
                 <PowerVisualizer base={question.base} exponent={question.exponent} />
 
                 <form onSubmit={onSubmit} className='answer-form'>
+                    {error && <div className='error-message' style={{ marginBottom: '10px' }}>{error}</div>}
                     <input
                         type='number'
                         value={answer}

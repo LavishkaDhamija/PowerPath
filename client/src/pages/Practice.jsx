@@ -113,19 +113,52 @@ export default function Practice() {
                 {/* Visualizer Placeholder */}
                 <PowerVisualizer base={question.base} exponent={question.exponent} />
 
-                <form onSubmit={onSubmit} className='answer-form'>
-                    {error && <div className='error-message' style={{ marginBottom: '10px' }}>{error}</div>}
-                    <input
-                        type='number'
-                        value={answer}
-                        onChange={(e) => setAnswer(e.target.value)}
-                        placeholder='Enter your answer'
-                        autoFocus
-                    />
-                    <button type='submit' className='btn btn-primary'>
-                        Submit Answer
-                    </button>
-                </form>
+                {result ? (
+                    <div className={`feedback-card ${result.isCorrect ? 'success' : 'error'}`} style={{
+                        marginTop: '20px',
+                        padding: '20px',
+                        borderRadius: '10px',
+                        backgroundColor: result.isCorrect ? '#d4edda' : '#f8d7da',
+                        color: result.isCorrect ? '#155724' : '#721c24',
+                        textAlign: 'center'
+                    }}>
+                        <h2>{result.isCorrect ? 'Correct! 🎉' : 'Incorrect 😔'}</h2>
+
+                        {!result.isCorrect && (
+                            <div style={{ marginTop: '10px' }}>
+                                <p>The correct answer is: <strong>{result.correctAnswer}</strong></p>
+                                <p style={{ fontSize: '1.2rem', marginTop: '5px' }}>
+                                    Explanation: {Array(question.exponent).fill(question.base).join(' × ')} = {result.correctAnswer}
+                                </p>
+                            </div>
+                        )}
+
+                        <button
+                            onClick={() => {
+                                setResult(null); // Clear result
+                                fetchQuestion();  // Get next question
+                            }}
+                            className='btn btn-primary'
+                            style={{ marginTop: '15px' }}
+                        >
+                            Next Question
+                        </button>
+                    </div>
+                ) : (
+                    <form onSubmit={onSubmit} className='answer-form'>
+                        {error && <div className='error-message' style={{ marginBottom: '10px' }}>{error}</div>}
+                        <input
+                            type='number'
+                            value={answer}
+                            onChange={(e) => setAnswer(e.target.value)}
+                            placeholder='Enter your answer'
+                            autoFocus
+                        />
+                        <button type='submit' className='btn btn-primary'>
+                            Submit Answer
+                        </button>
+                    </form>
+                )}
             </div>
         </div>
     );

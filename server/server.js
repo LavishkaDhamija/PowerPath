@@ -22,6 +22,7 @@ app.use(cors());
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/attempt', require('./routes/attemptRoutes'));
 app.use('/api/progress', require('./routes/progressRoutes'));
+app.use('/api/history', require('./routes/historyRoutes'));
 
 app.get('/', (req, res) => {
     res.send('Server is running');

@@ -49,16 +49,17 @@ const submitAnswer = async (req, res) => {
             await student.save();
         }
 
+        // 7. Calculate Accuracy
+        let accuracy = 0;
+        if (student.totalAttempts > 0) {
+            accuracy = (student.correctAnswers / student.totalAttempts) * 100;
+        }
+
         res.status(201).json({
             isCorrect: attempt.isCorrect,
-            studentAnswer: attempt.studentAnswer,
             correctAnswer: attempt.correctAnswer,
-            message: attempt.isCorrect ? 'Correct!' : 'Incorrect',
-            stats: {
-                totalAttempts: student.totalAttempts,
-                correctAnswers: student.correctAnswers,
-                currentLevel: student.currentLevel // Included for future use
-            }
+            accuracy: accuracy.toFixed(2), // 2 decimal places
+            message: attempt.isCorrect ? 'Correct!' : 'Incorrect'
         });
 
     } catch (error) {

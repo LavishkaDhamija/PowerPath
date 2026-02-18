@@ -53,6 +53,20 @@ export default function Dashboard() {
         navigate('/login');
     };
 
+    if (loading) {
+        return <div className='container'><h2>Loading dashboard...</h2></div>;
+    }
+
+    const getAccuracyColor = (accuracy) => {
+        const val = parseFloat(accuracy);
+        if (val >= 80) return '#2ed573'; // Green
+        if (val >= 50) return '#ffa502'; // Orange/Yellow
+        return '#ff4757'; // Red
+    };
+
+    const accuracyVal = stats.accuracy || 0;
+    const accuracyColor = getAccuracyColor(accuracyVal);
+
     return (
         <div className='container'>
             <header className='dashboard-header'>
@@ -80,7 +94,22 @@ export default function Dashboard() {
                 </div>
                 <div className='stat-card'>
                     <h3>Accuracy</h3>
-                    <p className='stat-value'>{stats.accuracy || 0}%</p>
+                    <p className='stat-value' style={{ color: accuracyColor }}>{accuracyVal}%</p>
+                    <div className="progress-bar-container" style={{
+                        marginTop: '10px',
+                        background: '#e0e0e0',
+                        borderRadius: '5px',
+                        height: '10px',
+                        width: '100%',
+                        overflow: 'hidden'
+                    }}>
+                        <div style={{
+                            width: `${accuracyVal}%`,
+                            background: accuracyColor,
+                            height: '100%',
+                            transition: 'width 0.5s ease-in-out'
+                        }}></div>
+                    </div>
                 </div>
             </div>
 

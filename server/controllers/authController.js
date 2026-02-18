@@ -2,22 +2,24 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Student = require('../models/Student');
 
+const AppError = require('../utils/AppError');
+
 // @desc    Register a new student
 // @route   POST /api/register
 // @access  Public
-const registerStudent = async (req, res) => {
+const registerStudent = async (req, res, next) => {
     try {
         const { name, email, password } = req.body;
 
         // 1. Validate Input
         if (!name || !email || !password) {
-            return res.status(400).json({ message: 'Please provide all required fields' });
+            return next(new AppError('Please provide all required fields', 400));
         }
 
         // 2. Check if student already exists
         const studentExists = await Student.findOne({ email });
         if (studentExists) {
-            return res.status(400).json({ message: 'User already exists' });
+            return next(new AppError('User already exists', 400));
         }
 
         // 3. Hash Password
@@ -40,25 +42,24 @@ const registerStudent = async (req, res) => {
                 message: 'Student registered successfully'
             });
         } else {
-            res.status(400).json({ message: 'Invalid user data' });
+            return next(new AppError('Invalid user data', 400));
         }
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server Error' });
+        next(error);
     }
 };
 
 // @desc    Authenticate student & get token
 // @route   POST /api/auth/login
 // @access  Public
-const loginStudent = async (req, res) => {
+const loginStudent = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
         // 1. Validate Input
         if (!email || !password) {
-            return res.status(400).json({ message: 'Please provide email and password' });
+            return next(new AppError('Please provide email and password', 400));
         }
 
         // 2. Check for student
@@ -81,12 +82,11 @@ const loginStudent = async (req, res) => {
                 token: token
             });
         } else {
-            res.status(401).json({ message: 'Invalid credentials' });
+            return next(new AppError('Invalid credentials', 401));
         }
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server Error' });
+        next(error);
     }
 };
 

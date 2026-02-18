@@ -2,10 +2,12 @@ const Attempt = require('../models/Attempt');
 const Student = require('../models/Student');
 const { adjustDifficulty } = require('../services/adaptiveEngine');
 
+const AppError = require('../utils/AppError');
+
 // @desc    Submit an answer
 // @route   POST /api/attempt
 // @access  Private
-const submitAnswer = async (req, res) => {
+const submitAnswer = async (req, res, next) => {
     try {
         const { base, exponent, studentAnswer } = req.body;
 
@@ -18,7 +20,7 @@ const submitAnswer = async (req, res) => {
             exponent === undefined ||
             studentAnswer === undefined
         ) {
-            return res.status(400).json({ message: 'Please provide base, exponent, and answer' });
+            return next(new AppError('Please provide base, exponent, and answer', 400));
         }
 
         // 3. Calculate Correct Answer
@@ -72,8 +74,7 @@ const submitAnswer = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server Error' });
+        next(error);
     }
 };
 

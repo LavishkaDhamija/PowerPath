@@ -1,15 +1,16 @@
 const Attempt = require('../models/Attempt');
+const AppError = require('../utils/AppError');
 
 // @desc    Get student attempt history
 // @route   GET /api/history/:studentId
 // @access  Private
-const getHistory = async (req, res) => {
+const getHistory = async (req, res, next) => {
     try {
         const studentId = req.params.studentId;
 
         // Authorization: Ensure student can only access their own history
         if (studentId !== req.user._id.toString()) {
-            return res.status(403).json({ message: 'Not authorized to view this history' });
+            return next(new AppError('Not authorized to view this history', 403));
         }
 
         // Find attempts for this student, sorted by newest first
@@ -21,8 +22,7 @@ const getHistory = async (req, res) => {
         res.status(200).json(history);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server Error' });
+        next(error);
     }
 };
 

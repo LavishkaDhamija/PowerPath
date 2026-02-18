@@ -1,22 +1,24 @@
 const Student = require('../models/Student');
 
+const AppError = require('../utils/AppError');
+
 // @desc    Generate a new question based on student level
 // @route   GET /api/question/:studentId
 // @access  Private
-const generateQuestion = async (req, res) => {
+const generateQuestion = async (req, res, next) => {
     try {
         const studentId = req.params.studentId;
 
         // Authorization: Ensure student can only generate questions for themselves
         if (studentId !== req.user._id.toString()) {
-            return res.status(403).json({ message: 'Not authorized to generate questions for this user' });
+            return next(new AppError('Not authorized to generate questions for this user', 403));
         }
 
         // 1. Find Student
         const student = await Student.findById(studentId);
 
         if (!student) {
-            return res.status(404).json({ message: 'Student not found' });
+            return next(new AppError('Student not found', 404));
         }
 
         const level = student.currentLevel;
@@ -57,8 +59,7 @@ const generateQuestion = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server Error' });
+        next(error);
     }
 };
 

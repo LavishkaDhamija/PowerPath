@@ -25,9 +25,15 @@ app.use('/api/progress', require('./routes/progressRoutes'));
 app.use('/api/history', require('./routes/historyRoutes'));
 app.use('/api/question', require('./routes/questionRoutes'));
 
+const { notFound, errorHandler } = require('./middleware/errorMiddleware');
+
 app.get('/', (req, res) => {
     res.send('Server is running');
 });
+
+// Error Handling Middleware
+app.use(notFound);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 

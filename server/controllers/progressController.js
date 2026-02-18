@@ -1,22 +1,24 @@
 const Student = require('../models/Student');
 
+const AppError = require('../utils/AppError');
+
 // @desc    Get student progress (accuracy, level, history)
 // @route   GET /api/progress/:studentId
 // @access  Private
-const getProgress = async (req, res) => {
+const getProgress = async (req, res, next) => {
     try {
         const studentId = req.params.studentId;
 
         // 1. Authorization: Ensure student can only access their own data
         if (studentId !== req.user._id.toString()) {
-            return res.status(403).json({ message: 'Not authorized to view this profile' });
+            return next(new AppError('Not authorized to view this profile', 403));
         }
 
         // 2. Find Student
         const student = await Student.findById(studentId);
 
         if (!student) {
-            return res.status(404).json({ message: 'Student not found' });
+            return next(new AppError('Student not found', 404));
         }
 
         // 2. Calculate Accuracy
@@ -34,8 +36,7 @@ const getProgress = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server Error' });
+        next(error);
     }
 };
 

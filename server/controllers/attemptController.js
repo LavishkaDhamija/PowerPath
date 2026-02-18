@@ -1,5 +1,6 @@
 const Attempt = require('../models/Attempt');
 const Student = require('../models/Student');
+const { adjustDifficulty } = require('../services/adaptiveEngine');
 
 // @desc    Submit an answer
 // @route   POST /api/attempt
@@ -47,6 +48,14 @@ const submitAnswer = async (req, res) => {
                 student.wrongAnswers += 1;
             }
             await student.save();
+        }
+
+        // 7. Adjust Difficulty Level (Adaptive Engine)
+        if (student) {
+            const levelChanged = adjustDifficulty(student);
+            if (levelChanged) {
+                await student.save(); // Save the new level if changed
+            }
         }
 
         // 7. Calculate Accuracy

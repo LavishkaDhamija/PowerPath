@@ -16,17 +16,24 @@ const protect = async (req, res, next) => {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
             // Get student from the token (exclude password)
-            req.student = await Student.findById(decoded.id).select('-password');
+            req.user = await Student.findById(decoded.id).select('-password');
+
+            if (!req.user) {
+                return res.status(401).json({ message: 'Not authorized, user not found' });
+            }
 
             next();
         } catch (error) {
             console.error(error);
-            res.status(401).json({ message: 'Not authorized, token failed' });
+            if (error.name === 'TokenExpiredError') {
+                return res.status(401).json({ message: 'Session expired, please login again' });
+            }
+            return res.status(401).json({ message: 'Not authorized, token invalid' });
         }
     }
 
     if (!token) {
-        res.status(401).json({ message: 'Not authorized, no token' });
+        return res.status(401).json({ message: 'Not authorized, no token provided' });
     }
 };
 

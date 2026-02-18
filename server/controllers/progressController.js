@@ -7,7 +7,12 @@ const getProgress = async (req, res) => {
     try {
         const studentId = req.params.studentId;
 
-        // 1. Find Student
+        // 1. Authorization: Ensure student can only access their own data
+        if (studentId !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'Not authorized to view this profile' });
+        }
+
+        // 2. Find Student
         const student = await Student.findById(studentId);
 
         if (!student) {

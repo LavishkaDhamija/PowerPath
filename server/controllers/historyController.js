@@ -7,6 +7,11 @@ const getHistory = async (req, res) => {
     try {
         const studentId = req.params.studentId;
 
+        // Authorization: Ensure student can only access their own history
+        if (studentId !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'Not authorized to view this history' });
+        }
+
         // Find attempts for this student, sorted by newest first
         const history = await Attempt.find({ studentId })
             .sort({ timestamp: -1 }) // -1 = Descending (Newest first)

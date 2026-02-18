@@ -7,6 +7,11 @@ const generateQuestion = async (req, res) => {
     try {
         const studentId = req.params.studentId;
 
+        // Authorization: Ensure student can only generate questions for themselves
+        if (studentId !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'Not authorized to generate questions for this user' });
+        }
+
         // 1. Find Student
         const student = await Student.findById(studentId);
 

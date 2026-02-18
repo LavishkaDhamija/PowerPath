@@ -10,7 +10,7 @@ const submitAnswer = async (req, res) => {
         const { base, exponent, studentAnswer } = req.body;
 
         // 1. Get student ID from token (not body)
-        const studentId = req.student._id;
+        const studentId = req.user._id;
 
         // 2. Validate Input
         if (

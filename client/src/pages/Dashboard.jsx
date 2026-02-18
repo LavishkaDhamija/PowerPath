@@ -70,30 +70,45 @@ export default function Dashboard() {
                 </button>
             </header>
 
-            <div className='stats-grid'>
-                <div className='stat-card'>
-                    <h3>Total Attempts</h3>
-                    <p className='stat-value'>{stats.totalAttempts || 0}</p>
+            {stats.totalAttempts === 0 ? (
+                <div style={{
+                    textAlign: 'center',
+                    padding: '40px',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '10px',
+                    margin: '20px 0'
+                }}>
+                    <h2>👋 Ready to start learning?</h2>
+                    <p style={{ fontSize: '1.1rem', color: '#666' }}>
+                        Start practicing to unlock your progress stats!
+                    </p>
                 </div>
-                <div className='stat-card'>
-                    <h3>Correct Answers</h3>
-                    <p className='stat-value success'>{stats.correctAnswers || 0}</p>
+            ) : (
+                <div className='stats-grid'>
+                    <div className='stat-card'>
+                        <h3>Total Attempts</h3>
+                        <p className='stat-value'>{stats.totalAttempts || 0}</p>
+                    </div>
+                    <div className='stat-card'>
+                        <h3>Correct Answers</h3>
+                        <p className='stat-value success'>{stats.correctAnswers || 0}</p>
+                    </div>
+                    <div className='stat-card'>
+                        <h3>Wrong Answers</h3>
+                        <p className='stat-value error'>{stats.wrongAnswers || 0}</p>
+                    </div>
+                    <div className='stat-card'>
+                        <AccuracyProgress accuracy={stats.accuracy || 0} />
+                    </div>
                 </div>
-                <div className='stat-card'>
-                    <h3>Wrong Answers</h3>
-                    <p className='stat-value error'>{stats.wrongAnswers || 0}</p>
-                </div>
-                <div className='stat-card'>
-                    <AccuracyProgress accuracy={stats.accuracy || 0} />
-                </div>
-            </div>
+            )}
 
             <div className='dashboard-actions'>
                 <button
                     onClick={() => navigate('/practice')}
                     className='btn btn-primary btn-large'
                 >
-                    Start Practice Session
+                    {stats.totalAttempts === 0 ? 'Start First Session' : 'Continue Practice'}
                 </button>
             </div>
         </div>

@@ -5,7 +5,8 @@ const attemptSchema = new mongoose.Schema({
     studentId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Student',
-        required: true
+        required: true,
+        index: true
     },
 
     // Question Details

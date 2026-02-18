@@ -7,6 +7,10 @@ const connectDB = require('./config/db');
 
 connectDB();
 
+// Register Models
+require('./models/Student');
+require('./models/Attempt');
+
 const app = express();
 
 

@@ -2,14 +2,26 @@ import { useEffect, useState } from 'react';
 
 export default function PowerVisualizer({ base, exponent }) {
     const [elements, setElements] = useState([]);
+    const [showResult, setShowResult] = useState(false);
 
     useEffect(() => {
+        // Reset result when base/exponent changes
+        setShowResult(false);
+
         // Calculate total items (e.g., 2^3 = 8 items)
         const total = Math.pow(base, exponent);
-
-        // Create an array of that length
         const newElements = Array.from({ length: total }, (_, i) => i);
         setElements(newElements);
+
+        // Delay showing result until blocks have appeared
+        // Delay = (exponent * 0.2s) + some buffer
+        const delay = (exponent * 200) + 500;
+
+        const timer = setTimeout(() => {
+            setShowResult(true);
+        }, delay);
+
+        return () => clearTimeout(timer);
     }, [base, exponent]);
 
     return (
@@ -74,7 +86,25 @@ export default function PowerVisualizer({ base, exponent }) {
                         )}
                     </div>
                 ))}
-                <span style={{ fontSize: '1.5rem', marginLeft: '10px', color: '#555' }}>= {Math.pow(base, exponent)}</span>
+            </div>
+
+            <div style={{
+                marginTop: '20px',
+                height: '40px', // Reserve space to avoid layout jump
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}>
+                {showResult && (
+                    <div style={{
+                        fontSize: '1.8rem',
+                        fontWeight: 'bold',
+                        color: '#2e7d32',
+                        animation: 'fadeIn 0.5s ease-in'
+                    }}>
+                        = {Math.pow(base, exponent)}
+                    </div>
+                )}
             </div>
 
             <p style={{ marginTop: '15px', color: '#888' }}>

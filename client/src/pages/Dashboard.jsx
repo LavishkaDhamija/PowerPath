@@ -1,15 +1,43 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 export default function Dashboard() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
+    const [stats, setStats] = useState({
+        totalAttempts: 0,
+        correctAnswers: 0,
+        wrongAnswers: 0,
+        accuracy: 0
+    });
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         // Get user from localStorage
         const savedUser = localStorage.getItem('user');
-        if (savedUser) {
-            setUser(JSON.parse(savedUser));
+        const token = localStorage.getItem('token');
+
+        if (savedUser && token) {
+            const parsedUser = JSON.parse(savedUser);
+            setUser(parsedUser);
+
+            // Fetch stats
+            const fetchStats = async () => {
+                try {
+                    const response = await axios.get(`http://localhost:5000/api/progress/${parsedUser.id}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setStats(response.data);
+                } catch (error) {
+                    console.error('Error fetching stats:', error);
+                    // Provide robust error handling later
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            fetchStats();
         } else {
             // If no user/token, redirect to login
             navigate('/login');
@@ -27,14 +55,43 @@ export default function Dashboard() {
 
     return (
         <div className='container'>
-            <h1>Welcome to Dashboard</h1>
-            {user && <h2>Hello, {user.name}!</h2>}
+            <header className='dashboard-header'>
+                <div>
+                    <h1>Welcome, {user ? user.name : 'Student'}!</h1>
+                    <p>Track your progress and improve your skills.</p>
+                </div>
+                <button onClick={onLogout} className='btn btn-logout'>
+                    Logout
+                </button>
+            </header>
 
-            <p>This is your protected student area.</p>
+            <div className='stats-grid'>
+                <div className='stat-card'>
+                    <h3>Total Attempts</h3>
+                    <p className='stat-value'>{stats.totalAttempts || 0}</p>
+                </div>
+                <div className='stat-card'>
+                    <h3>Correct Answers</h3>
+                    <p className='stat-value success'>{stats.correctAnswers || 0}</p>
+                </div>
+                <div className='stat-card'>
+                    <h3>Wrong Answers</h3>
+                    <p className='stat-value error'>{stats.wrongAnswers || 0}</p>
+                </div>
+                <div className='stat-card'>
+                    <h3>Accuracy</h3>
+                    <p className='stat-value'>{stats.accuracy || 0}%</p>
+                </div>
+            </div>
 
-            <button onClick={onLogout} className='btn'>
-                Logout
-            </button>
+            <div className='dashboard-actions'>
+                <button
+                    onClick={() => navigate('/practice')}
+                    className='btn btn-primary btn-large'
+                >
+                    Start Practice Session
+                </button>
+            </div>
         </div>
     );
 }

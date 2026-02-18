@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const Student = require('../models/Student');
 
 // @desc    Register a new student
@@ -52,7 +53,41 @@ const registerStudent = async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 const loginStudent = async (req, res) => {
-    // Logic will go here
+    try {
+        const { email, password } = req.body;
+
+        // 1. Validate Input
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Please provide email and password' });
+        }
+
+        // 2. Check for student
+        const student = await Student.findOne({ email });
+
+        // 3. Check password
+        if (student && (await bcrypt.compare(password, student.password))) {
+            // 4. Generate Token
+            const token = jwt.sign(
+                { id: student._id },
+                process.env.JWT_SECRET,
+                { expiresIn: '1h' }
+            );
+
+            // 5. Respond (Success)
+            res.json({
+                _id: student.id,
+                name: student.name,
+                email: student.email,
+                token: token
+            });
+        } else {
+            res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
 };
 
 module.exports = {

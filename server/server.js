@@ -20,6 +20,7 @@ app.use(cors());
 
 // Basic Route
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/attempt', require('./routes/attemptRoutes'));
 
 app.get('/', (req, res) => {
     res.send('Server is running');

@@ -19,6 +19,8 @@ app.use(express.json());
 app.use(cors());
 
 // Basic Route
+app.use('/api/auth', require('./routes/authRoutes'));
+
 app.get('/', (req, res) => {
     res.send('Server is running');
 });

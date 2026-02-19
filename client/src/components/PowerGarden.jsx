@@ -1,8 +1,46 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import Seed from './Seed';
+import Pot from './Pot';
 
 const PowerGarden = ({ base, exponent }) => {
     // Generate an array for pots based on the exponent
     const pots = Array.from({ length: exponent }, (_, i) => i + 1);
+
+    // --- State Management ---
+    const [filledPots, setFilledPots] = useState(new Array(exponent).fill(false)); // Track which pots have seeds
+    const [isDragging, setIsDragging] = useState(false);
+    const [position, setPosition] = useState({ x: 0, y: 0 }); // Current cursor/seed position
+    const [offset, setOffset] = useState({ x: 0, y: 0 });     // Offset to keep seed under cursor
+
+    // --- Refs for Collision Detection ---
+    const seedRef = useRef(null);
+    const potRefs = useRef([]); // Check collision against these
+    const gardenRef = useRef(null); // Container reference
+
+    // Reset when question changes
+    useEffect(() => {
+        setFilledPots(new Array(exponent).fill(false));
+        setIsDragging(false); // Reset drag state
+    }, [base, exponent]);
+
+    // --- Drag Logic ---
+    const handlePointerDown = (e) => {
+        e.preventDefault();
+
+        // Disable text selection and touch scrolling during drag
+        e.currentTarget.setPointerCapture(e.pointerId);
+
+        const elem = e.currentTarget;
+        const rect = elem.getBoundingClientRect();
+
+        // Calculate offset so the seed stays under the cursor exactly where grabbed
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
+
+        setOffset({ x: offsetX, y: offsetY });
+        setPosition({ x: e.clientX - offsetX, y: e.clientY - offsetY });
+        setIsDragging(true);
+    };
 
     return (
         <div className="power-garden-container" style={{

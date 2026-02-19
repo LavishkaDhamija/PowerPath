@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import PowerVisualizer from '../components/PowerVisualizer';
+import PowerGarden from '../components/PowerGarden';
 
 export default function Practice() {
     const navigate = useNavigate();
@@ -67,10 +68,6 @@ export default function Practice() {
                 exponent: question.exponent,
                 studentAnswer: answer
             });
-
-            console.log('Submission Result:', response.data);
-
-            // ... (rest of logic)
 
             console.log('Submission Result:', response.data);
 
@@ -209,24 +206,8 @@ export default function Practice() {
                             </button>
                         </div>
                     ) : (
-                        <form onSubmit={onSubmit} className='answer-form'>
-                            {error && <div className='error-message' style={{ marginBottom: '10px' }}>{error}</div>}
-                            <input
-                                type='number'
-                                value={answer}
-                                onChange={(e) => setAnswer(e.target.value)}
-                                placeholder='Enter your answer'
-                                autoFocus
-                            />
-                            <button
-                                type='submit'
-                                className='btn btn-primary'
-                                disabled={isSubmitting}
-                                style={{ opacity: isSubmitting ? 0.7 : 1 }}
-                            >
-                                {isSubmitting ? 'Checking...' : 'Submit Answer'}
-                            </button>
-                        </form>
+                        /* POWER GARDEN LAYOUT - PHASE 1 */
+                        <PowerGarden base={question.base} exponent={question.exponent} />
                     )}
                 </div>
             </div>

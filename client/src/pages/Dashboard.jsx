@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import AccuracyProgress from '../components/AccuracyProgress';
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -57,16 +58,6 @@ export default function Dashboard() {
         return <div className='container'><h2>Loading dashboard...</h2></div>;
     }
 
-    const getAccuracyColor = (accuracy) => {
-        const val = parseFloat(accuracy);
-        if (val >= 80) return '#2ed573'; // Green
-        if (val >= 50) return '#ffa502'; // Orange/Yellow
-        return '#ff4757'; // Red
-    };
-
-    const accuracyVal = stats.accuracy || 0;
-    const accuracyColor = getAccuracyColor(accuracyVal);
-
     return (
         <div className='container'>
             <header className='dashboard-header'>
@@ -79,48 +70,49 @@ export default function Dashboard() {
                 </button>
             </header>
 
-            <div className='stats-grid'>
-                <div className='stat-card'>
-                    <h3>Total Attempts</h3>
-                    <p className='stat-value'>{stats.totalAttempts || 0}</p>
+            {stats.totalAttempts === 0 ? (
+                <div style={{
+                    textAlign: 'center',
+                    padding: '40px',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '10px',
+                    margin: '20px 0'
+                }}>
+                    <h2>👋 Ready to start learning?</h2>
+                    <p style={{ fontSize: '1.1rem', color: '#666' }}>
+                        Start practicing to unlock your progress stats!
+                    </p>
                 </div>
-                <div className='stat-card'>
-                    <h3>Correct Answers</h3>
-                    <p className='stat-value success'>{stats.correctAnswers || 0}</p>
-                </div>
-                <div className='stat-card'>
-                    <h3>Wrong Answers</h3>
-                    <p className='stat-value error'>{stats.wrongAnswers || 0}</p>
-                </div>
-                <div className='stat-card'>
-                    <h3>Accuracy</h3>
-                    <p className='stat-value' style={{ color: accuracyColor }}>{accuracyVal}%</p>
-                    <div className="progress-bar-container" style={{
-                        marginTop: '10px',
-                        background: '#e0e0e0',
-                        borderRadius: '5px',
-                        height: '10px',
-                        width: '100%',
-                        overflow: 'hidden'
-                    }}>
-                        <div style={{
-                            width: `${accuracyVal}%`,
-                            background: accuracyColor,
-                            height: '100%',
-                            transition: 'width 0.5s ease-in-out'
-                        }}></div>
+            ) : (
+                <div className='stats-grid'>
+                    <div className='stat-card'>
+                        <h3>Total Attempts</h3>
+                        <p className='stat-value'>{stats.totalAttempts || 0}</p>
+                    </div>
+                    <div className='stat-card'>
+                        <h3>Correct Answers</h3>
+                        <p className='stat-value success'>{stats.correctAnswers || 0}</p>
+                    </div>
+                    <div className='stat-card'>
+                        <h3>Wrong Answers</h3>
+                        <p className='stat-value error'>{stats.wrongAnswers || 0}</p>
+                    </div>
+                    <div className='stat-card'>
+                        <AccuracyProgress accuracy={stats.accuracy || 0} />
                     </div>
                 </div>
-            </div>
+            )}
 
             <div className='dashboard-actions'>
                 <button
                     onClick={() => navigate('/practice')}
                     className='btn btn-primary btn-large'
                 >
-                    Start Practice Session
+                    {stats.totalAttempts === 0 ? 'Start First Session' : 'Continue Practice'}
                 </button>
             </div>
         </div>
     );
 }
+
+

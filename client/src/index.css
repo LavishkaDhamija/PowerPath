@@ -1,68 +1,221 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /* Pastel Color Palette - Autism Friendly */
+  --primary-soft: #a0c4ff;
+  /* Soft Blue */
+  --primary-dark: #4a90e2;
+  /* Medium Blue for text/action */
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  --success-soft: #caffbf;
+  /* Soft Green */
+  --success-text: #2d6a4f;
+  /* Dark Green for readability */
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  --warning-soft: #ffd6a5;
+  /* Soft Orange */
+  --warning-text: #b84e00;
+  /* Dark Orange for readability */
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+  --error-soft: #ffadad;
+  /* Soft Red/Pink (avoid pure red) */
+  --error-text: #8a2be2;
+  /* Using a softer purple/red for error text */
+
+  --bg-neutral: #fdfbf7;
+  /* Warm off-white (easy on eyes) */
+  --card-bg: #ffffff;
+  --text-main: #2c3e50;
+  /* Dark slate (not pure black) */
+
+  /* Font Stack */
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  color: var(--text-main);
+  background-color: var(--bg-neutral);
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
   min-height: 100vh;
+  display: block;
+  /* Removed flex-center to allow full layouts */
+  background-color: var(--bg-neutral);
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
+/* Global Button Styles */
 button {
   border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+  border: none;
+  padding: 0.8em 1.5em;
+  /* Larger touch target */
+  font-size: 1.1em;
+  font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  transition: transform 0.1s ease, background-color 0.2s;
+  background-color: var(--primary-soft);
+  color: #1a3b5c;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+button:hover {
+  transform: translateY(-2px);
+  /* Gentle lift */
+  background-color: #8bb1f0;
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Form Styles */
+input {
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1.1em;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 15px;
+  transition: border-color 0.3s;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--primary-dark);
+}
+
+/* Container Utility */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Card Utility */
+.card,
+.stat-card,
+.question-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  /* High radius = "Friendly" */
+  padding: 25px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  /* Soft shadow */
+  margin-bottom: 20px;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin: 30px 0;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 10px 0;
+  color: var(--primary-dark);
+}
+
+.stat-value.success {
+  color: var(--success-text);
+}
+
+.stat-value.error {
+  color: #d63031;
+}
+
+/* Slightly softer red */
+
+/* Navigation */
+nav {
+  background: var(--card-bg);
+  padding: 15px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+nav a {
+  text-decoration: none;
+  color: var(--primary-dark);
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+/* Feedback Card Styles */
+.feedback-card.success {
+  background-color: var(--success-soft) !important;
+  color: var(--success-text) !important;
+}
+
+.feedback-card.error {
+  background-color: var(--warning-soft) !important;
+  /* Use orange for error background */
+  color: var(--warning-text) !important;
+}
+
+/* Typography Enhancements */
+h1 {
+  font-size: 2.5rem;
+  color: var(--text-main);
+  margin-bottom: 0.5em;
+}
+
+h2 {
+  font-size: 1.8rem;
+  color: var(--text-main);
+  margin-bottom: 0.5em;
+}
+
+p {
+  font-size: 1.1rem;
+  color: #555;
+}
+
+/* Dark Mode Support */
+body.dark-mode {
+  --bg-neutral: #1a1a2e;
+  /* Deep muted blue/grey */
+  --card-bg: #16213e;
+  /* Darker card blue */
+  --text-main: #e6e6e6;
+  /* Soft white text */
+  --primary-soft: #0f3460;
+  /* Muted dark blue button */
+  --primary-dark: #5386e4;
+  /* Brighter accent for dark mode */
+
+  color: var(--text-main);
+  background-color: var(--bg-neutral);
+}
+
+body.dark-mode .card,
+body.dark-mode .stat-card,
+body.dark-mode .question-card,
+body.dark-mode nav {
+  background: var(--card-bg);
+  box-shadow: none;
+  border: 1px solid #2a2a4e;
+}
+
+body.dark-mode button {
+  background-color: var(--primary-dark);
+  color: #fff;
+}
+
+body.dark-mode input {
+  background-color: #0f3460;
+  border-color: #5386e4;
+  color: white;
+}
+
+body.dark-mode p {
+  color: #b0b0b0;
+}
+
+body.dark-mode h1,
+body.dark-mode h2 {
+  color: #fff;
 }

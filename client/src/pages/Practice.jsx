@@ -44,18 +44,22 @@ export default function Practice() {
     }, [navigate]);
 
     const [error, setError] = useState('');
-
+    const [showExplain, setShowExplain] = useState(false);
     const [result, setResult] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [slowMode, setSlowMode] = useState(true);
+    const [feedbackMessage, setFeedbackMessage] = useState('');
 
     const onSubmit = async (e) => {
         e.preventDefault();
 
-        if (!answer) {
-            setError('Please enter a number');
+        if (!answer || isSubmitting) {
+            if (!answer) setError('Please enter a number');
             return;
         }
 
         try {
+            setIsSubmitting(true);
             setError('');
             const savedUser = localStorage.getItem('user');
             const token = localStorage.getItem('token');
@@ -71,11 +75,23 @@ export default function Practice() {
             });
 
             console.log('Submission Result:', response.data);
+
+            // Generate Micro-Feedback
+            if (response.data.isCorrect) {
+                const msgs = ["Great effort! 🌟", "Nice work!", "You're doing great!", "Spot on!"];
+                setFeedbackMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+            } else {
+                const msgs = ["Let's understand it together.", "Take your time.", "You'll get it next time.", "Let's review the steps."];
+                setFeedbackMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+            }
+
             setResult(response.data);
 
         } catch (err) {
             console.error('Submission error:', err);
             setError('Failed to submit answer. Please try again.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -85,9 +101,23 @@ export default function Practice() {
 
     return (
         <div className='container'>
-            <div className='practice-header'>
-                <h1>Practice Mode (Level {question.level})</h1>
-                <p>Solve the power problem below:</p>
+            <div className='practice-header' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <h1>Practice Mode (Level {question.level})</h1>
+                    <p>Solve the power problem below:</p>
+                </div>
+                <button
+                    onClick={() => setSlowMode(!slowMode)}
+                    className='btn'
+                    style={{
+                        background: slowMode ? '#a0c4ff' : '#eee',
+                        color: slowMode ? '#000' : '#444',
+                        fontSize: '0.9rem',
+                        padding: '6px 12px'
+                    }}
+                >
+                    🐢 Slow Mode: {slowMode ? 'ON' : 'OFF'}
+                </button>
             </div>
 
             <div className='question-card'>
@@ -110,55 +140,95 @@ export default function Practice() {
                     <span> = ?</span>
                 </div>
 
-                {/* Visualizer Placeholder */}
-                <PowerVisualizer base={question.base} exponent={question.exponent} />
+                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                    <button
+                        onClick={() => setShowExplain(!showExplain)}
+                        className="btn"
+                        style={{
+                            background: showExplain ? '#e0e0e0' : '#4a90e2',
+                            color: showExplain ? '#333' : 'white',
+                            fontSize: '0.9rem',
+                            padding: '8px 16px',
+                            border: 'none',
+                            borderRadius: '20px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        {showExplain ? 'Hide Explanation' : '👀 Show Visual Explanation'}
+                    </button>
+                </div>
 
-                {result ? (
-                    <div className={`feedback-card ${result.isCorrect ? 'success' : 'error'}`} style={{
-                        marginTop: '20px',
-                        padding: '20px',
-                        borderRadius: '10px',
-                        backgroundColor: result.isCorrect ? '#d4edda' : '#f8d7da',
-                        color: result.isCorrect ? '#155724' : '#721c24',
-                        textAlign: 'center'
-                    }}>
-                        <h2>{result.isCorrect ? 'Correct! 🎉' : 'Incorrect 😔'}</h2>
-
-                        {!result.isCorrect && (
-                            <div style={{ marginTop: '10px' }}>
-                                <p>The correct answer is: <strong>{result.correctAnswer}</strong></p>
-                                <p style={{ fontSize: '1.2rem', marginTop: '5px' }}>
-                                    Explanation: {Array(question.exponent).fill(question.base).join(' × ')} = {result.correctAnswer}
-                                </p>
-                            </div>
-                        )}
-
-                        <button
-                            onClick={() => {
-                                setResult(null); // Clear result
-                                fetchQuestion();  // Get next question
-                            }}
-                            className='btn btn-primary'
-                            style={{ marginTop: '15px' }}
-                        >
-                            Next Question
-                        </button>
-                    </div>
-                ) : (
-                    <form onSubmit={onSubmit} className='answer-form'>
-                        {error && <div className='error-message' style={{ marginBottom: '10px' }}>{error}</div>}
-                        <input
-                            type='number'
-                            value={answer}
-                            onChange={(e) => setAnswer(e.target.value)}
-                            placeholder='Enter your answer'
-                            autoFocus
-                        />
-                        <button type='submit' className='btn btn-primary'>
-                            Submit Answer
-                        </button>
-                    </form>
+                {showExplain && (
+                    <PowerVisualizer base={question.base} exponent={question.exponent} slowMode={slowMode} />
                 )}
+
+                <div key={question.base + '-' + question.exponent} style={{ animation: 'fadeIn 0.8s ease-in-out' }}>
+                    {result ? (
+                        <div className={`feedback-card ${result.isCorrect ? 'success' : 'error'}`} style={{
+                            marginTop: '20px',
+                            padding: '20px',
+                            borderRadius: '10px',
+                            backgroundColor: result.isCorrect ? '#d4edda' : '#f8d7da',
+                            color: result.isCorrect ? '#155724' : '#721c24',
+                            textAlign: 'center',
+                            animation: 'fadeIn 0.5s ease-out'
+                        }}>
+                            <h2 style={{ fontSize: '2rem', marginBottom: '10px' }}>
+                                {result.isCorrect ? 'Great job!' : 'Not quite right'}
+                            </h2>
+                            <p style={{ fontSize: '1.2rem', marginBottom: '15px', color: result.isCorrect ? '#155724' : '#555' }}>
+                                {feedbackMessage}
+                            </p>
+
+                            {!result.isCorrect && (
+                                <div style={{ marginTop: '10px' }}>
+                                    <div style={{
+                                        backgroundColor: 'rgba(255,255,255,0.6)',
+                                        padding: '10px',
+                                        borderRadius: '8px',
+                                        display: 'inline-block',
+                                        marginTop: '5px'
+                                    }}>
+                                        The correct answer is: <strong style={{ fontSize: '1.4rem' }}>{result.correctAnswer}</strong>
+                                    </div>
+                                    <div style={{ marginTop: '15px' }}>
+                                        <PowerVisualizer base={question.base} exponent={question.exponent} slowMode={slowMode} />
+                                    </div>
+                                </div>
+                            )}
+
+                            <button
+                                onClick={() => {
+                                    setResult(null); // Clear result
+                                    fetchQuestion();  // Get next question
+                                }}
+                                className='btn btn-primary'
+                                style={{ marginTop: '15px' }}
+                            >
+                                Next Question
+                            </button>
+                        </div>
+                    ) : (
+                        <form onSubmit={onSubmit} className='answer-form'>
+                            {error && <div className='error-message' style={{ marginBottom: '10px' }}>{error}</div>}
+                            <input
+                                type='number'
+                                value={answer}
+                                onChange={(e) => setAnswer(e.target.value)}
+                                placeholder='Enter your answer'
+                                autoFocus
+                            />
+                            <button
+                                type='submit'
+                                className='btn btn-primary'
+                                disabled={isSubmitting}
+                                style={{ opacity: isSubmitting ? 0.7 : 1 }}
+                            >
+                                {isSubmitting ? 'Checking...' : 'Submit Answer'}
+                            </button>
+                        </form>
+                    )}
+                </div>
             </div>
         </div>
     );

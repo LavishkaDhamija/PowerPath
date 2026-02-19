@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import PowerVisualizer from '../components/PowerVisualizer';
 
@@ -16,9 +16,8 @@ export default function Practice() {
     const fetchQuestion = async () => {
         try {
             const savedUser = localStorage.getItem('user');
-            const token = localStorage.getItem('token');
 
-            if (!savedUser || !token) {
+            if (!savedUser) {
                 navigate('/login');
                 return;
             }
@@ -26,9 +25,7 @@ export default function Practice() {
             const parsedUser = JSON.parse(savedUser);
             setLoading(true);
 
-            const response = await axios.get(`http://localhost:5000/api/question/${parsedUser.id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.get(`/question/${parsedUser.id}`);
 
             setQuestion(response.data);
             setAnswer(''); // Clear previous answer
@@ -62,17 +59,18 @@ export default function Practice() {
             setIsSubmitting(true);
             setError('');
             const savedUser = localStorage.getItem('user');
-            const token = localStorage.getItem('token');
             const parsedUser = JSON.parse(savedUser);
 
-            const response = await axios.post('http://localhost:5000/api/attempt/submit', {
+            const response = await api.post('/attempt/submit', {
                 studentId: parsedUser.id,
                 base: question.base,
                 exponent: question.exponent,
                 studentAnswer: answer
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
             });
+
+            console.log('Submission Result:', response.data);
+
+            // ... (rest of logic)
 
             console.log('Submission Result:', response.data);
 

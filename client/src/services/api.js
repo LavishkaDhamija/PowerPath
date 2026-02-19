@@ -1,12 +1,39 @@
 import axios from 'axios';
 
+// Create a centralized Axios instance
 const api = axios.create({
-    baseURL: 'http://localhost:5000/api',
+    baseURL: 'http://localhost:5000/api', // Centralized base URL
+    headers: {
+        'Content-Type': 'application/json',
+    },
 });
 
-export const login = (email, password) => api.post('/auth/login', { email, password });
-export const register = (name, email, password) => api.post('/auth/register', { name, email, password });
-export const getProgress = (studentId, token) => api.get(`/progress/${studentId}`, { headers: { Authorization: `Bearer ${token}` } });
-// Add other API calls here...
+// Request Interceptor: Attach Token Automatically
+api.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers['Authorization'] = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Response Interceptor: Handle Global Errors (Optional but recommended)
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        // Example: If token expired, redirect to login
+        if (error.response && error.response.status === 401) {
+            // localStorage.removeItem('token');
+            // window.location.href = '/login'; 
+            console.warn('Unauthorized access - potential token expiry');
+        }
+        return Promise.reject(error);
+    }
+);
 
 export default api;

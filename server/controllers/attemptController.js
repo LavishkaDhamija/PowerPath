@@ -40,7 +40,7 @@ const submitAnswer = async (req, res, next) => {
 
         // 6. Save Attempt
         const attempt = await Attempt.create({
-            student: studentId, // Using 'student' field from schema
+            studentId: studentId, // Correctly matches schema field 'studentId'
             base: baseNum,
             exponent: exponentNum,
             studentAnswer: studentAnswerNum,

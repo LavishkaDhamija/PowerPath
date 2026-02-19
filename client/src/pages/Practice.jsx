@@ -124,18 +124,20 @@ export default function Practice() {
                     margin: '30px 0',
                     fontFamily: "'Courier New', monospace",
                     display: 'flex',
-                    alignItems: 'center',
+                    alignItems: 'flex-start', // improved alignment
                     justifyContent: 'center',
-                    gap: '10px',
-                    animation: 'fadeIn 1s ease-in'
+                    gap: '2px', // closer gap
+                    animation: 'fadeIn 1s ease-in',
+                    lineHeight: '1'
                 }}>
                     <span style={{ fontWeight: 'bold' }}>{question.base}</span>
                     <sup style={{
                         color: '#ff4757',
-                        fontSize: '2.5rem',
-                        top: '-1.5em'
+                        fontSize: '2rem',
+                        top: '-0.2em', // Adjusted relative position
+                        position: 'relative'
                     }}>{question.exponent}</sup>
-                    <span> = ?</span>
+                    <span style={{ marginLeft: '10px' }}> = ?</span>
                 </div>
 
                 <div style={{ textAlign: 'center', marginBottom: '20px' }}>

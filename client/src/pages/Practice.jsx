@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import PowerVisualizer from '../components/PowerVisualizer';
+import PowerGarden from '../components/PowerGarden';
 
 export default function Practice() {
     const navigate = useNavigate();
@@ -16,9 +17,8 @@ export default function Practice() {
     const fetchQuestion = async () => {
         try {
             const savedUser = localStorage.getItem('user');
-            const token = localStorage.getItem('token');
 
-            if (!savedUser || !token) {
+            if (!savedUser) {
                 navigate('/login');
                 return;
             }
@@ -26,9 +26,7 @@ export default function Practice() {
             const parsedUser = JSON.parse(savedUser);
             setLoading(true);
 
-            const response = await axios.get(`http://localhost:5000/api/question/${parsedUser.id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.get(`/question/${parsedUser.id}`);
 
             setQuestion(response.data);
             setAnswer(''); // Clear previous answer
@@ -62,16 +60,13 @@ export default function Practice() {
             setIsSubmitting(true);
             setError('');
             const savedUser = localStorage.getItem('user');
-            const token = localStorage.getItem('token');
             const parsedUser = JSON.parse(savedUser);
 
-            const response = await axios.post('http://localhost:5000/api/attempt/submit', {
+            const response = await api.post('/attempt/submit', {
                 studentId: parsedUser.id,
                 base: question.base,
                 exponent: question.exponent,
                 studentAnswer: answer
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
             });
 
             console.log('Submission Result:', response.data);
@@ -126,18 +121,20 @@ export default function Practice() {
                     margin: '30px 0',
                     fontFamily: "'Courier New', monospace",
                     display: 'flex',
-                    alignItems: 'center',
+                    alignItems: 'flex-start', // improved alignment
                     justifyContent: 'center',
-                    gap: '10px',
-                    animation: 'fadeIn 1s ease-in'
+                    gap: '2px', // closer gap
+                    animation: 'fadeIn 1s ease-in',
+                    lineHeight: '1'
                 }}>
                     <span style={{ fontWeight: 'bold' }}>{question.base}</span>
                     <sup style={{
                         color: '#ff4757',
-                        fontSize: '2.5rem',
-                        top: '-1.5em'
+                        fontSize: '2rem',
+                        top: '-0.2em', // Adjusted relative position
+                        position: 'relative'
                     }}>{question.exponent}</sup>
-                    <span> = ?</span>
+                    <span style={{ marginLeft: '10px' }}> = ?</span>
                 </div>
 
                 <div style={{ textAlign: 'center', marginBottom: '20px' }}>
@@ -209,24 +206,8 @@ export default function Practice() {
                             </button>
                         </div>
                     ) : (
-                        <form onSubmit={onSubmit} className='answer-form'>
-                            {error && <div className='error-message' style={{ marginBottom: '10px' }}>{error}</div>}
-                            <input
-                                type='number'
-                                value={answer}
-                                onChange={(e) => setAnswer(e.target.value)}
-                                placeholder='Enter your answer'
-                                autoFocus
-                            />
-                            <button
-                                type='submit'
-                                className='btn btn-primary'
-                                disabled={isSubmitting}
-                                style={{ opacity: isSubmitting ? 0.7 : 1 }}
-                            >
-                                {isSubmitting ? 'Checking...' : 'Submit Answer'}
-                            </button>
-                        </form>
+                        /* POWER GARDEN LAYOUT - PHASE 1 */
+                        <PowerGarden base={question.base} exponent={question.exponent} />
                     )}
                 </div>
             </div>

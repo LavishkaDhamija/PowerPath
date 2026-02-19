@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import AccuracyProgress from '../components/AccuracyProgress';
 
 export default function Dashboard() {
@@ -17,18 +17,15 @@ export default function Dashboard() {
     useEffect(() => {
         // Get user from localStorage
         const savedUser = localStorage.getItem('user');
-        const token = localStorage.getItem('token');
 
-        if (savedUser && token) {
+        if (savedUser) {
             const parsedUser = JSON.parse(savedUser);
             setUser(parsedUser);
 
             // Fetch stats
             const fetchStats = async () => {
                 try {
-                    const response = await axios.get(`http://localhost:5000/api/progress/${parsedUser.id}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
+                    const response = await api.get(`/progress/${parsedUser.id}`);
                     setStats(response.data);
                 } catch (error) {
                     console.error('Error fetching stats:', error);

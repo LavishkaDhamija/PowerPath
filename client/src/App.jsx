@@ -7,6 +7,8 @@ import Dashboard from './pages/Dashboard';
 import Practice from './pages/Practice';
 import './App.css';
 
+import PrivateRoute from './components/PrivateRoute';
+
 function App() {
   return (
     <BrowserRouter>
@@ -15,8 +17,22 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/practice" element={<Practice />} />
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/practice"
+          element={
+            <PrivateRoute>
+              <Practice />
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

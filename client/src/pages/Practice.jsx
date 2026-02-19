@@ -47,6 +47,8 @@ export default function Practice() {
     const [showExplain, setShowExplain] = useState(false);
     const [result, setResult] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [slowMode, setSlowMode] = useState(true);
+    const [feedbackMessage, setFeedbackMessage] = useState('');
 
     const onSubmit = async (e) => {
         e.preventDefault();
@@ -73,6 +75,16 @@ export default function Practice() {
             });
 
             console.log('Submission Result:', response.data);
+
+            // Generate Micro-Feedback
+            if (response.data.isCorrect) {
+                const msgs = ["Great effort! 🌟", "Nice work!", "You're doing great!", "Spot on!"];
+                setFeedbackMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+            } else {
+                const msgs = ["Let's understand it together.", "Take your time.", "You'll get it next time.", "Let's review the steps."];
+                setFeedbackMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+            }
+
             setResult(response.data);
 
         } catch (err) {
@@ -89,9 +101,23 @@ export default function Practice() {
 
     return (
         <div className='container'>
-            <div className='practice-header'>
-                <h1>Practice Mode (Level {question.level})</h1>
-                <p>Solve the power problem below:</p>
+            <div className='practice-header' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <h1>Practice Mode (Level {question.level})</h1>
+                    <p>Solve the power problem below:</p>
+                </div>
+                <button
+                    onClick={() => setSlowMode(!slowMode)}
+                    className='btn'
+                    style={{
+                        background: slowMode ? '#a0c4ff' : '#eee',
+                        color: slowMode ? '#000' : '#444',
+                        fontSize: '0.9rem',
+                        padding: '6px 12px'
+                    }}
+                >
+                    🐢 Slow Mode: {slowMode ? 'ON' : 'OFF'}
+                </button>
             </div>
 
             <div className='question-card'>
@@ -133,7 +159,7 @@ export default function Practice() {
                 </div>
 
                 {showExplain && (
-                    <PowerVisualizer base={question.base} exponent={question.exponent} />
+                    <PowerVisualizer base={question.base} exponent={question.exponent} slowMode={slowMode} />
                 )}
 
                 <div key={question.base + '-' + question.exponent} style={{ animation: 'fadeIn 0.8s ease-in-out' }}>
@@ -148,15 +174,14 @@ export default function Practice() {
                             animation: 'fadeIn 0.5s ease-out'
                         }}>
                             <h2 style={{ fontSize: '2rem', marginBottom: '10px' }}>
-                                {result.isCorrect ? 'Great job! 🌟' : 'Not quite right'}
+                                {result.isCorrect ? 'Great job!' : 'Not quite right'}
                             </h2>
-                            {result.isCorrect && (
-                                <p style={{ fontSize: '1.2rem', color: '#155724' }}>You're improving! Keep it up!</p>
-                            )}
+                            <p style={{ fontSize: '1.2rem', marginBottom: '15px', color: result.isCorrect ? '#155724' : '#555' }}>
+                                {feedbackMessage}
+                            </p>
 
                             {!result.isCorrect && (
                                 <div style={{ marginTop: '10px' }}>
-                                    <p style={{ marginBottom: '10px', fontSize: '1.1rem' }}>Let's try to understand it step by step.</p>
                                     <div style={{
                                         backgroundColor: 'rgba(255,255,255,0.6)',
                                         padding: '10px',
@@ -167,7 +192,7 @@ export default function Practice() {
                                         The correct answer is: <strong style={{ fontSize: '1.4rem' }}>{result.correctAnswer}</strong>
                                     </div>
                                     <div style={{ marginTop: '15px' }}>
-                                        <PowerVisualizer base={question.base} exponent={question.exponent} />
+                                        <PowerVisualizer base={question.base} exponent={question.exponent} slowMode={slowMode} />
                                     </div>
                                 </div>
                             )}

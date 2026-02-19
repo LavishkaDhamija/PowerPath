@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-export default function PowerVisualizer({ base, exponent }) {
+export default function PowerVisualizer({ base, exponent, slowMode = true }) {
     const [elements, setElements] = useState([]);
     const [showResult, setShowResult] = useState(false);
 
@@ -13,16 +13,22 @@ export default function PowerVisualizer({ base, exponent }) {
         const newElements = Array.from({ length: total }, (_, i) => i);
         setElements(newElements);
 
-        // Delay showing result until blocks have appeared
-        // Delay = (exponent * 0.2s) + some buffer
-        const delay = (exponent * 200) + 500;
+        // Calculate Delay based on Mode
+        // Standard: 200ms per block
+        // Slow: 500ms per block
+        const perBlockDelay = slowMode ? 500 : 200;
+
+        // Total animation time = (total blocks * perBlockDelay) + buffer
+        // Note: We use 'exponent' for the multiplication view, but 'total' was for grid view.
+        // For the multiplication view loop:
+        const delay = (exponent * perBlockDelay) + 500;
 
         const timer = setTimeout(() => {
             setShowResult(true);
         }, delay);
 
         return () => clearTimeout(timer);
-    }, [base, exponent]);
+    }, [base, exponent, slowMode]);
 
     return (
         <div className="visualizer-container" style={{
@@ -54,7 +60,8 @@ export default function PowerVisualizer({ base, exponent }) {
                         alignItems: 'center',
                         gap: '10px',
                         animation: `fadeInUp 0.5s ease forwards`,
-                        animationDelay: `${i * 0.2}s`,
+                        // Dynamic Delay
+                        animationDelay: `${i * (slowMode ? 0.5 : 0.2)}s`,
                         opacity: 0,
                         transform: 'translateY(10px)'
                     }}>

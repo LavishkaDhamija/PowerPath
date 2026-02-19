@@ -23,47 +23,58 @@ const submitAnswer = async (req, res, next) => {
             return next(new AppError('Please provide base, exponent, and answer', 400));
         }
 
-        // 3. Calculate Correct Answer
-        const correctAnswer = Math.pow(base, exponent);
+        // 3. Convert to Numbers Explicitly
+        const baseNum = Number(base);
+        const exponentNum = Number(exponent);
+        const studentAnswerNum = Number(studentAnswer);
 
-        // 4. Check if answer is correct
-        const isCorrect = studentAnswer === correctAnswer;
+        if (isNaN(baseNum) || isNaN(exponentNum) || isNaN(studentAnswerNum)) {
+            return next(new AppError('Invalid input numbers', 400));
+        }
 
-        // 5. Save Attempt
+        // 4. Calculate Correct Answer
+        const correctAnswer = Math.pow(baseNum, exponentNum);
+
+        // 5. Check if answer is correct
+        const isCorrect = studentAnswerNum === correctAnswer;
+
+        // 6. Save Attempt
         const attempt = await Attempt.create({
-            studentId,
-            base,
-            exponent,
-            studentAnswer,
+            student: studentId, // Using 'student' field from schema
+            base: baseNum,
+            exponent: exponentNum,
+            studentAnswer: studentAnswerNum,
             correctAnswer,
             isCorrect
         });
 
-        // 6. Update Student Stats
-        const student = await Student.findById(studentId);
+        // 7. Update Student Stats (Find Student)
+        const studentDoc = await Student.findById(studentId);
 
-        if (student) {
-            student.totalAttempts += 1;
+        if (studentDoc) {
+            studentDoc.totalAttempts += 1;
             if (isCorrect) {
-                student.correctAnswers += 1;
+                studentDoc.correctAnswers += 1;
             } else {
-                student.wrongAnswers += 1;
+                studentDoc.wrongAnswers += 1;
             }
-            await student.save();
+            await studentDoc.save();
+
+            // 8. Adjust Difficulty Level (Adaptive Engine)
+            // adjustDifficulty expects the student document
+            const levelChanged = adjustDifficulty(studentDoc);
+            // adjustDifficulty implicitly modifies the student object if needed
+            // But we already saved above?
+            // Actually, adjustDifficulty modifies the object in memory. 
+            // We should save it again if changed, or save once at the end.
+            // Let's save once at the end to be safe and efficient.
+            await studentDoc.save();
         }
 
-        // 7. Adjust Difficulty Level (Adaptive Engine)
-        if (student) {
-            const levelChanged = adjustDifficulty(student);
-            if (levelChanged) {
-                await student.save(); // Save the new level if changed
-            }
-        }
-
-        // 7. Calculate Accuracy
+        // 9. Calculate Accuracy
         let accuracy = 0;
-        if (student.totalAttempts > 0) {
-            accuracy = (student.correctAnswers / student.totalAttempts) * 100;
+        if (studentDoc && studentDoc.totalAttempts > 0) {
+            accuracy = (studentDoc.correctAnswers / studentDoc.totalAttempts) * 100;
         }
 
         res.status(201).json({

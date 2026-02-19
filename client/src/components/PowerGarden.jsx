@@ -42,6 +42,41 @@ const PowerGarden = ({ base, exponent }) => {
         setIsDragging(true);
     };
 
+    const handlePointerMove = (e) => {
+        if (!isDragging) return;
+
+        e.preventDefault();
+
+        // Update position based on pointer minus offset
+        const newX = e.clientX - offset.x;
+        const newY = e.clientY - offset.y;
+
+        setPosition({ x: newX, y: newY });
+    };
+
+    const handlePointerUp = (e) => {
+        if (!isDragging) return;
+
+        e.preventDefault();
+        setIsDragging(false);
+        // Snapping logic will go here later
+    };
+
+    // Attach global listeners for move/up to ensure we catch events even if cursor leaves the element
+    useEffect(() => {
+        if (isDragging) {
+            window.addEventListener('pointermove', handlePointerMove);
+            window.addEventListener('pointerup', handlePointerUp);
+        } else {
+            window.removeEventListener('pointermove', handlePointerMove);
+            window.removeEventListener('pointerup', handlePointerUp);
+        }
+        return () => {
+            window.removeEventListener('pointermove', handlePointerMove);
+            window.removeEventListener('pointerup', handlePointerUp);
+        };
+    }, [isDragging, offset]);
+
     return (
         <div className="power-garden-container" style={{
             padding: '30px',
@@ -51,7 +86,9 @@ const PowerGarden = ({ base, exponent }) => {
             boxShadow: '0 8px 16px rgba(0,0,0,0.05)',
             textAlign: 'center',
             maxWidth: '100%',
-            margin: '0 auto'
+            margin: '0 auto',
+            position: 'relative', // for absolute positioning context if needed
+            touchAction: 'none' // Prevent scrolling on container
         }}>
             {/* Title */}
             <h2 style={{
@@ -82,27 +119,45 @@ const PowerGarden = ({ base, exponent }) => {
                     border: '2px dashed #fbc02d',
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    position: 'relative',
+                    zIndex: 10
                 }}>
                     <strong style={{ color: '#f57f17', marginBottom: '10px' }}>Seed Supply</strong>
 
-                    {/* The Seed Representation */}
-                    <div style={{
-                        width: '80px',
-                        height: '80px',
-                        borderRadius: '50%',
-                        backgroundColor: '#ffeb3b', // Seed bright yellow
-                        border: '4px solid #fbc02d',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        fontSize: '2rem',
-                        fontWeight: 'bold',
-                        color: '#f57f17',
-                        background: 'radial-gradient(circle at 30% 30%, #fff9c4, #ffeb3b)',
-                        boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-                    }}>
-                        {base}
+                    {/* Draggable Seed (rendered conditionally or overlay) */}
+                    {/* We keep a 'ghost' static seed to show where it comes from */}
+                    <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+                        {/* Static Placeholder (Ghost) */}
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            borderRadius: '50%',
+                            border: '4px dashed #fbc02d',
+                            opacity: 0.5
+                        }}></div>
+
+                        {/* The Draggable Seed */}
+                        {/* If dragging, we use fixed position to float above everything. 
+                            If not dragging, it sits static in the supply. */}
+                        <Seed
+                            value={base}
+                            onPointerDown={handlePointerDown}
+                            style={isDragging ? {
+                                position: 'fixed',
+                                left: 0,
+                                top: 0,
+                                transform: `translate(${position.x}px, ${position.y}px)`,
+                                zIndex: 9999,
+                                cursor: 'grabbing',
+                                pointerEvents: 'none' // let events pass through to document for move handler
+                            } : {
+                                cursor: 'grab'
+                            }}
+                        />
                     </div>
                 </div>
 
@@ -110,7 +165,7 @@ const PowerGarden = ({ base, exponent }) => {
                 <div style={{ fontSize: '2rem', color: '#8d6e63' }}>⬇</div>
 
                 {/* Pots Area */}
-                <div className="pots-container" style={{
+                <div className="pots-container" ref={gardenRef} style={{
                     display: 'flex',
                     flexWrap: 'wrap',
                     justifyContent: 'center',
@@ -121,45 +176,9 @@ const PowerGarden = ({ base, exponent }) => {
                     width: '100%',
                     boxSizing: 'border-box'
                 }}>
-                    {pots.map((potId) => (
-                        <div key={potId} className="garden-pot" style={{
-                            width: '100px',
-                            height: '100px',
-                            backgroundColor: '#8d6e63', // Pot brown
-                            borderRadius: '5px 5px 25px 25px', // Pot shape
-                            position: 'relative',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'flex-start',
-                            paddingTop: '10px',
-                            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
-                            borderTop: '5px solid #6d4c41'
-                        }}>
-                            {/* Empty Place Indicator */}
-                            <div style={{
-                                width: '60px',
-                                height: '60px',
-                                borderRadius: '50%',
-                                border: '2px dashed rgba(255,255,255,0.4)',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                color: 'rgba(255,255,255,0.6)',
-                                fontSize: '0.8rem'
-                            }}>
-                                Empty
-                            </div>
-
-                            {/* Pot Number Label */}
-                            <span style={{
-                                position: 'absolute',
-                                bottom: '5px',
-                                color: 'white',
-                                fontSize: '0.8rem',
-                                fontWeight: 'bold'
-                            }}>
-                                Pot {potId}
-                            </span>
+                    {pots.map((potId, index) => (
+                        <div key={potId} ref={el => potRefs.current[index] = el}>
+                            <Pot index={index} filled={filledPots[index]} />
                         </div>
                     ))}
                 </div>

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Seed from './Seed';
 import Pot from './Pot';
 
-const PowerGarden = ({ base, exponent }) => {
+const PowerGarden = ({ base, exponent, onAllPotsFilled }) => {
     // Generate an array for pots based on the exponent
     const pots = Array.from({ length: exponent }, (_, i) => i + 1);
 
@@ -12,17 +12,31 @@ const PowerGarden = ({ base, exponent }) => {
     const [position, setPosition] = useState({ x: 0, y: 0 }); // Current cursor/seed position
     const [offset, setOffset] = useState({ x: 0, y: 0 });     // Offset to keep seed under cursor
     const [hoveredPotIndex, setHoveredPotIndex] = useState(null); // Which pot is currently being hovered
+    const [feedback, setFeedback] = useState(""); // Feedback message for user
 
-    // --- Refs for Collision Detection ---
+    // --- Refs for Collision Detection & Logic ---
     const seedRef = useRef(null);
     const potRefs = useRef([]); // Check collision against these
     const gardenRef = useRef(null); // Container reference
+    const hasTriggeredRef = useRef(false); // Prevent duplicate triggers
 
     // Reset when question changes
     useEffect(() => {
         setFilledPots(new Array(exponent).fill(false));
         setIsDragging(false); // Reset drag state
+        hasTriggeredRef.current = false; // Allow trigger for new question
     }, [base, exponent]);
+
+    // Completion Trigger
+    useEffect(() => {
+        if (!hasTriggeredRef.current && filledPots.length > 0 && filledPots.every(Boolean)) {
+            hasTriggeredRef.current = true;
+            if (onAllPotsFilled) {
+                // Small delay for visual "planting" satisfaction
+                setTimeout(() => onAllPotsFilled(), 500);
+            }
+        }
+    }, [filledPots, onAllPotsFilled]);
 
     // --- Drag Logic ---
     const handlePointerDown = (e) => {
@@ -89,20 +103,25 @@ const PowerGarden = ({ base, exponent }) => {
 
         // 2. Loop through all pots to see if we dropped inside one
         let droppedInPotIndex = -1;
+        let droppedOnFilledPot = false;
 
         potRefs.current.forEach((potElem, index) => {
-            if (!potElem || filledPots[index]) return; // Skip if pot invalid or already full
+            if (!potElem) return;
 
             const rect = potElem.getBoundingClientRect();
-
-            // Simple rectangle collision check
-            if (
+            const isInside = (
                 dropX >= rect.left &&
                 dropX <= rect.right &&
                 dropY >= rect.top &&
                 dropY <= rect.bottom
-            ) {
-                droppedInPotIndex = index;
+            );
+
+            if (isInside) {
+                if (filledPots[index]) {
+                    droppedOnFilledPot = true;
+                } else {
+                    droppedInPotIndex = index;
+                }
             }
         });
 
@@ -112,12 +131,15 @@ const PowerGarden = ({ base, exponent }) => {
             const newFilled = [...filledPots];
             newFilled[droppedInPotIndex] = true;
             setFilledPots(newFilled);
-
-            // Visual feedback (optional console log for now)
+            setFeedback(""); // Clear any error feedback
             console.log(`Planted in Pot ${droppedInPotIndex + 1}!`);
+        } else if (droppedOnFilledPot) {
+            // Illegal drop - pot already full
+            setFeedback("This pot is already planted.");
+            setTimeout(() => setFeedback(""), 2000); // Clear after 2s
+            console.log("Pot already full");
         } else {
-            // Invalid Drop - logic resets automatically because isDragging becomes false 
-            // and the component re-renders the Seed back in the supply header.
+            // Invalid Drop - logic resets automatically
             console.log("Returned to supply");
         }
     };
@@ -236,6 +258,17 @@ const PowerGarden = ({ base, exponent }) => {
                         )}
                     </div>
                 </div>
+
+                {feedback && (
+                    <div style={{
+                        color: '#c62828', // Material Red 800
+                        fontWeight: 'bold',
+                        fontSize: '1rem',
+                        marginBottom: '10px'
+                    }}>
+                        {feedback}
+                    </div>
+                )}
 
                 {allFilled && (
                     <div style={{

@@ -30,6 +30,7 @@ export default function Practice() {
 
             setQuestion(response.data);
             setAnswer(''); // Clear previous answer
+            setGardenComplete(false); // Reset garden state
         } catch (error) {
             console.error('Error fetching question:', error);
         } finally {
@@ -47,6 +48,7 @@ export default function Practice() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [slowMode, setSlowMode] = useState(true);
     const [feedbackMessage, setFeedbackMessage] = useState('');
+    const [gardenComplete, setGardenComplete] = useState(false);
 
     const onSubmit = async (e) => {
         e.preventDefault();
@@ -206,8 +208,26 @@ export default function Practice() {
                             </button>
                         </div>
                     ) : (
-                        /* POWER GARDEN LAYOUT - PHASE 1 */
-                        <PowerGarden base={question.base} exponent={question.exponent} />
+                        /* POWER GARDEN LAYOUT - PHASE 3 */
+                        <div style={{ textAlign: 'center' }}>
+                            <PowerGarden
+                                base={question.base}
+                                exponent={question.exponent}
+                                onAllPotsFilled={() => setGardenComplete(true)}
+                            />
+
+                            {gardenComplete && (
+                                <div style={{
+                                    marginTop: '20px',
+                                    color: '#2e7d32',
+                                    fontSize: '1.2rem',
+                                    fontWeight: 'bold',
+                                    animation: 'fadeIn 0.5s ease-in'
+                                }}>
+                                    Great! All pots are planted 🌱
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>

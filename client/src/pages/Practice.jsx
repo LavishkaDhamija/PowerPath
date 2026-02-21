@@ -71,6 +71,7 @@ export default function Practice() {
     const [showFlower, setShowFlower] = useState(false);
     const [showResult, setShowResult] = useState(false);
     const [showSummary, setShowSummary] = useState(false); // New state to delay feedback card
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
     // Unified Animation Sequence: Manages the structured reveal lifecycle
     useEffect(() => {
@@ -97,6 +98,31 @@ export default function Practice() {
             timers.forEach(t => clearTimeout(t));
         };
     }, [gardenComplete]);
+
+    // Fullscreen Toggle Logic
+    const toggleFullscreen = async () => {
+        try {
+            if (!document.fullscreenElement) {
+                await document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    await document.exitFullscreen();
+                }
+            }
+        } catch (err) {
+            console.error("Error attempting to enable full-screen mode:", err);
+            setError("Fullscreen mode not supported on this browser.");
+        }
+    };
+
+    // Monitor Fullscreen changes (handles ESC key exit)
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    }, []);
 
     const handleSubmission = async (currentAnswer) => {
         if (!currentAnswer || isSubmitting) return;
@@ -161,18 +187,34 @@ export default function Practice() {
                     <h1>Practice Mode (Level {question.level})</h1>
                     <p>Solve the power problem below:</p>
                 </div>
-                <button
-                    onClick={() => setSlowMode(!slowMode)}
-                    className='btn'
-                    style={{
-                        background: slowMode ? '#a0c4ff' : '#eee',
-                        color: slowMode ? '#000' : '#444',
-                        fontSize: '0.9rem',
-                        padding: '6px 12px'
-                    }}
-                >
-                    🐢 Slow Mode: {slowMode ? 'ON' : 'OFF'}
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                        onClick={toggleFullscreen}
+                        className='btn'
+                        style={{
+                            background: isFullscreen ? '#ffd1dc' : '#f0f4f8',
+                            color: '#333',
+                            fontSize: '0.9rem',
+                            padding: '6px 12px',
+                            border: '1px solid #d1d9e6',
+                            borderRadius: '8px'
+                        }}
+                    >
+                        {isFullscreen ? '⏹ Exit Focus' : '🔍 Focus Mode'}
+                    </button>
+                    <button
+                        onClick={() => setSlowMode(!slowMode)}
+                        className='btn'
+                        style={{
+                            background: slowMode ? '#a0c4ff' : '#eee',
+                            color: slowMode ? '#000' : '#444',
+                            fontSize: '0.9rem',
+                            padding: '6px 12px'
+                        }}
+                    >
+                        🐢 Slow Mode: {slowMode ? 'ON' : 'OFF'}
+                    </button>
+                </div>
             </div>
 
             <div className='question-card'>

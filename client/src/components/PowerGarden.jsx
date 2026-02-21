@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Seed from './Seed';
 import Pot from './Pot';
 
-const PowerGarden = ({ base, exponent, onAllPotsFilled, showPlants, showFlower }) => {
+const PowerGarden = ({ base, exponent, onAllPotsFilled, showPlants, showFlower, isSubmitting }) => {
     // Generate an array for pots based on the exponent
     const pots = Array.from({ length: exponent }, (_, i) => i + 1);
 
@@ -19,13 +19,22 @@ const PowerGarden = ({ base, exponent, onAllPotsFilled, showPlants, showFlower }
     const potRefs = useRef([]); // Check collision against these
     const gardenRef = useRef(null); // Container reference
     const hasTriggeredRef = useRef(false); // Prevent duplicate triggers
+    const completionTimeoutRef = useRef(null); // Ref to clear timeout
 
     // Reset when question changes
     useEffect(() => {
         setFilledPots(new Array(exponent).fill(false));
         setIsDragging(false); // Reset drag state
         hasTriggeredRef.current = false; // Allow trigger for new question
+        if (completionTimeoutRef.current) clearTimeout(completionTimeoutRef.current);
     }, [base, exponent]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (completionTimeoutRef.current) clearTimeout(completionTimeoutRef.current);
+        };
+    }, []);
 
     // Completion Trigger
     useEffect(() => {
@@ -33,13 +42,14 @@ const PowerGarden = ({ base, exponent, onAllPotsFilled, showPlants, showFlower }
             hasTriggeredRef.current = true;
             if (onAllPotsFilled) {
                 // Small delay for visual "planting" satisfaction
-                setTimeout(() => onAllPotsFilled(), 500);
+                completionTimeoutRef.current = setTimeout(() => onAllPotsFilled(), 500);
             }
         }
     }, [filledPots, onAllPotsFilled]);
 
     // --- Drag Logic ---
     const handlePointerDown = (e) => {
+        if (filledPots.every(Boolean) || isSubmitting) return; // Lock interactions if completed
         e.preventDefault();
 
         // Disable text selection and touch scrolling during drag

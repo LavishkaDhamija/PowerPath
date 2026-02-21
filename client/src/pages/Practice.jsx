@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import PowerVisualizer from '../components/PowerVisualizer';
@@ -128,6 +128,15 @@ export default function Practice() {
 
             setResult(response.data);
 
+            // If backend returns a new level, update the question state immediately
+            if (response.data.level) {
+                setQuestion(prev => ({
+                    ...prev,
+                    level: response.data.level
+                }));
+                console.log('Level synchronized from backend:', response.data.level);
+            }
+
         } catch (err) {
             console.error('Submission error:', err);
             setError('Failed to validate answer. Please try again.');
@@ -207,7 +216,12 @@ export default function Practice() {
                 </div>
 
                 {showExplain && (
-                    <PowerVisualizer base={question.base} exponent={question.exponent} slowMode={slowMode} />
+                    <PowerVisualizer
+                        base={question.base}
+                        exponent={question.exponent}
+                        slowMode={slowMode}
+                        providedResult={result?.correctAnswer}
+                    />
                 )}
 
                 <div key={question.base + '-' + question.exponent} style={{ animation: 'fadeIn 0.8s ease-in-out' }}>
@@ -244,7 +258,12 @@ export default function Practice() {
                                         The correct answer is: <strong style={{ fontSize: '1.4rem' }}>{result.correctAnswer}</strong>
                                     </div>
                                     <div style={{ marginTop: '15px' }}>
-                                        <PowerVisualizer base={question.base} exponent={question.exponent} slowMode={slowMode} />
+                                        <PowerVisualizer
+                                            base={question.base}
+                                            exponent={question.exponent}
+                                            slowMode={slowMode}
+                                            providedResult={result.correctAnswer}
+                                        />
                                     </div>
                                 </div>
                             )}
@@ -267,6 +286,7 @@ export default function Practice() {
                                 base={question.base}
                                 exponent={question.exponent}
                                 onAllPotsFilled={() => {
+                                    if (isSubmitting) return; // Prevent double submission
                                     setGardenComplete(true);
 
                                     // Derive studentAnswer conceptually
@@ -280,6 +300,7 @@ export default function Practice() {
                                 }}
                                 showPlants={showPlants}
                                 showFlower={showFlower && (result ? result.isCorrect : true)}
+                                isSubmitting={isSubmitting}
                             />
 
                             {/* Stable container for feedback and expression to prevent jumping */}

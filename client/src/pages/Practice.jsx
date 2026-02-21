@@ -54,6 +54,7 @@ export default function Practice() {
         setShowPlants(false);
         setShowFlower(false);
         setShowResult(false);
+        setShowSummary(false); // Reset summary state
         setAnswer('');
         setError('');
     }, [question.base, question.exponent]);
@@ -69,6 +70,7 @@ export default function Practice() {
     const [showPlants, setShowPlants] = useState(false);
     const [showFlower, setShowFlower] = useState(false);
     const [showResult, setShowResult] = useState(false);
+    const [showSummary, setShowSummary] = useState(false); // New state to delay feedback card
 
     // Unified Animation Sequence: Manages the structured reveal lifecycle
     useEffect(() => {
@@ -88,22 +90,21 @@ export default function Practice() {
         // 4. Reveal Result (2000ms = 1500 + 500ms pause)
         timers.push(setTimeout(() => setShowResult(true), 2000));
 
+        // 5. Show Summary Card (4000ms = 2000 + 2000ms observation time)
+        timers.push(setTimeout(() => setShowSummary(true), 4000));
+
         return () => {
             timers.forEach(t => clearTimeout(t));
         };
     }, [gardenComplete]);
 
-    const onSubmit = async (e) => {
-        e.preventDefault();
-
-        if (!answer || isSubmitting) {
-            if (!answer) setError('Please enter a number');
-            return;
-        }
+    const handleSubmission = async (currentAnswer) => {
+        if (!currentAnswer || isSubmitting) return;
 
         try {
             setIsSubmitting(true);
             setError('');
+
             const savedUser = localStorage.getItem('user');
             const parsedUser = JSON.parse(savedUser);
 
@@ -111,12 +112,12 @@ export default function Practice() {
                 studentId: parsedUser.id,
                 base: question.base,
                 exponent: question.exponent,
-                studentAnswer: answer
+                studentAnswer: currentAnswer
             });
 
-            console.log('Submission Result:', response.data);
+            console.log('Backend Validation Result:', response.data);
 
-            // Generate Micro-Feedback
+            // Generate Micro-Feedback based on backend response
             if (response.data.isCorrect) {
                 const msgs = ["Great effort! 🌟", "Nice work!", "You're doing great!", "Spot on!"];
                 setFeedbackMessage(msgs[Math.floor(Math.random() * msgs.length)]);
@@ -129,10 +130,15 @@ export default function Practice() {
 
         } catch (err) {
             console.error('Submission error:', err);
-            setError('Failed to submit answer. Please try again.');
+            setError('Failed to validate answer. Please try again.');
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const onSubmit = async (e) => {
+        e.preventDefault();
+        await handleSubmission(answer);
     };
 
     if (loading) {
@@ -205,7 +211,7 @@ export default function Practice() {
                 )}
 
                 <div key={question.base + '-' + question.exponent} style={{ animation: 'fadeIn 0.8s ease-in-out' }}>
-                    {result ? (
+                    {(result && showSummary) ? (
                         <div className={`feedback-card ${result.isCorrect ? 'success' : 'error'}`} style={{
                             marginTop: '20px',
                             padding: '20px',
@@ -221,6 +227,10 @@ export default function Practice() {
                             <p style={{ fontSize: '1.2rem', marginBottom: '15px', color: result.isCorrect ? '#155724' : '#555' }}>
                                 {feedbackMessage}
                             </p>
+
+                            <div style={{ fontSize: '1.1rem', marginBottom: '20px' }}>
+                                <b>New Accuracy:</b> {result.accuracy}%
+                            </div>
 
                             {!result.isCorrect && (
                                 <div style={{ marginTop: '10px' }}>
@@ -251,14 +261,25 @@ export default function Practice() {
                             </button>
                         </div>
                     ) : (
-                        /* POWER GARDEN LAYOUT - PHASE 3 */
+                        /* POWER GARDEN LAYOUT - PHASE 6 */
                         <div style={{ textAlign: 'center' }}>
                             <PowerGarden
                                 base={question.base}
                                 exponent={question.exponent}
-                                onAllPotsFilled={() => setGardenComplete(true)}
+                                onAllPotsFilled={() => {
+                                    setGardenComplete(true);
+
+                                    // Derive studentAnswer conceptually
+                                    let derivedAnswer = 1;
+                                    for (let i = 0; i < question.exponent; i++) {
+                                        derivedAnswer *= question.base;
+                                    }
+
+                                    // Auto-Submit to Backend
+                                    handleSubmission(derivedAnswer.toString());
+                                }}
                                 showPlants={showPlants}
-                                showFlower={showFlower}
+                                showFlower={showFlower && (result ? result.isCorrect : true)}
                             />
 
                             {/* Stable container for feedback and expression to prevent jumping */}
@@ -282,12 +303,12 @@ export default function Practice() {
                                             fontSize: '3.8rem',
                                             fontFamily: "'Courier New', monospace",
                                             fontWeight: 'bold',
-                                            color: '#2d6a4f', // Soft dark green
+                                            color: result && showResult && !result.isCorrect ? '#c62828' : '#2d6a4f',
                                             backgroundColor: '#ffffff',
                                             padding: '20px 60px',
                                             borderRadius: '24px',
                                             boxShadow: '0 8px 20px rgba(0,0,0,0.06)',
-                                            border: '3px solid #c8e6c9',
+                                            border: result && showResult ? `3px solid ${result.isCorrect ? '#c8e6c9' : '#ffcdd2'}` : '3px solid #c8e6c9',
                                             letterSpacing: '0.15em',
                                             lineHeight: '1',
                                             display: 'inline-flex',
@@ -297,9 +318,12 @@ export default function Practice() {
                                         }}
                                     >
                                         {Array(question.exponent).fill(question.base).join(" \u00d7 ")}
-                                        {showResult && (
-                                            <span className="fade-in" style={{ marginLeft: '20px', color: '#1b5e20' }}>
-                                                = {Math.pow(question.base, question.exponent)}
+                                        {showResult && result && (
+                                            <span className="fade-in" style={{
+                                                marginLeft: '20px',
+                                                color: result.isCorrect ? '#1b5e20' : '#d32f2f'
+                                            }}>
+                                                = {result.correctAnswer}
                                             </span>
                                         )}
                                     </div>
@@ -310,13 +334,13 @@ export default function Practice() {
                                         className="fade-in"
                                         style={{
                                             marginTop: '20px',
-                                            color: '#2d6a4f', // Soft dark green
+                                            color: result && !result.isCorrect ? '#d32f2f' : '#2d6a4f',
                                             fontSize: '1.4rem',
                                             fontWeight: '600',
                                             fontStyle: 'italic'
                                         }}
                                     >
-                                        You grew the answer 🌸
+                                        {result && !result.isCorrect ? "Let's look at the correct answer 🌸" : "You grew the answer 🌸"}
                                     </div>
                                 )}
                             </div>

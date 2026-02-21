@@ -5,6 +5,7 @@ import PowerVisualizer from '../components/PowerVisualizer';
 import PowerGarden from '../components/PowerGarden';
 import { ScreenCapture } from 'react-screen-capture';
 import GardenCardView from '../components/GardenCardView';
+import html2canvas from 'html2canvas';
 
 export default function Practice() {
     const navigate = useNavigate();
@@ -59,6 +60,7 @@ export default function Practice() {
         setShowSummary(false); // Reset summary state
         setAnswer('');
         setError('');
+        hasCapturedRef.current = false; // Allow new capture for new question
     }, [question.base, question.exponent]);
 
     const [error, setError] = useState('');
@@ -78,6 +80,13 @@ export default function Practice() {
     const [isPaused, setIsPaused] = useState(false);
     const [screenWidth, setScreenWidth] = useState(window.innerWidth);
     const [lastCaptureImage, setLastCaptureImage] = useState('');
+    const [isAutoSaving, setIsAutoSaving] = useState(false);
+    const [gardenGallery, setGardenGallery] = useState(() => {
+        const saved = localStorage.getItem('gardenGallery');
+        return saved ? JSON.parse(saved) : [];
+    });
+    const hasCapturedRef = useRef(false);
+    const cardRef = useRef(null);
 
     // Unified Animation Sequence: Manages the structured reveal lifecycle
     useEffect(() => {
@@ -166,6 +175,11 @@ export default function Practice() {
         };
     }, []);
 
+    // Persist Gallery to localStorage
+    useEffect(() => {
+        localStorage.setItem('gardenGallery', JSON.stringify(gardenGallery));
+    }, [gardenGallery]);
+
     const handleSubmission = async (currentAnswer) => {
         if (!currentAnswer || isSubmitting) return;
 
@@ -218,10 +232,55 @@ export default function Practice() {
         await handleSubmission(answer);
     };
 
-    const handleScreenCapture = (base64Image) => {
+    const addToGallery = (base64Image) => {
+        const newItem = {
+            id: Date.now(),
+            base: question.base,
+            exponent: question.exponent,
+            isCorrect: result?.isCorrect,
+            correctAnswer: result?.correctAnswer,
+            image: base64Image,
+            createdAt: new Date().toISOString()
+        };
+        setGardenGallery(prev => {
+            const updated = [newItem, ...prev];
+            return updated.slice(0, 10); // Keep only the last 10 entries
+        });
         setLastCaptureImage(base64Image);
-        console.log('Garden Card Captured! Preview ready.');
+        console.log('Garden Card added to Gallery and persisted:', newItem.id);
     };
+
+    const handleScreenCapture = (base64Image) => {
+        addToGallery(base64Image);
+    };
+
+    // Automatic Capture Logic
+    useEffect(() => {
+        if (showResult && result?.isCorrect && !hasCapturedRef.current && cardRef.current) {
+            hasCapturedRef.current = true;
+            setIsAutoSaving(true);
+
+            // Short delay to ensure the UI has finished its transition
+            const timer = setTimeout(async () => {
+                try {
+                    const canvas = await html2canvas(cardRef.current, {
+                        backgroundColor: null,
+                        scale: 2, // Higher quality
+                        logging: false
+                    });
+                    const base64Image = canvas.toDataURL('image/png');
+                    addToGallery(base64Image);
+                    console.log('Automatic Garden Card Saved!');
+                } catch (err) {
+                    console.error('Auto-capture failed:', err);
+                } finally {
+                    setIsAutoSaving(false);
+                }
+            }, 600); // 600ms delay for visual stability
+
+            return () => clearTimeout(timer);
+        }
+    }, [showResult, result]);
 
     if (loading) {
         return <div className='container'><h2>Loading question...</h2></div>;
@@ -483,12 +542,24 @@ export default function Practice() {
                             <ScreenCapture onEndCapture={handleScreenCapture}>
                                 {({ onStartCapture }) => (
                                     <div style={{ textAlign: 'center' }}>
-                                        <GardenCardView
-                                            base={question.base}
-                                            exponent={question.exponent}
-                                            result={result}
-                                            feedbackMessage={feedbackMessage}
-                                        />
+                                        {isAutoSaving && (
+                                            <div style={{
+                                                fontSize: '0.9rem',
+                                                color: '#558b2f',
+                                                marginBottom: '10px',
+                                                fontStyle: 'italic'
+                                            }}>
+                                                Saving your Garden Card... 📸
+                                            </div>
+                                        )}
+                                        <div ref={cardRef}>
+                                            <GardenCardView
+                                                base={question.base}
+                                                exponent={question.exponent}
+                                                result={result}
+                                                feedbackMessage={feedbackMessage}
+                                            />
+                                        </div>
                                         <button
                                             onClick={onStartCapture}
                                             className="btn"

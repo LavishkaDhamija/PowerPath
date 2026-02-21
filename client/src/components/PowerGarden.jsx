@@ -59,7 +59,50 @@ const PowerGarden = ({ base, exponent }) => {
 
         e.preventDefault();
         setIsDragging(false);
-        // Snapping logic will go here later
+
+        // --- Collision Detection Logic ---
+        // 1. Get current seed center (using the last known cursor position and offset)
+        // Note: The cursor position IS the transformation origin because we used offset.
+        // position.x = clientX - offset.x
+        // We want the center of the 80x80 seed (so +40, +40)
+        // But actually, checking the Pointer coordinates (e.clientX, e.clientY) is simpler and usually sufficient.
+
+        const dropX = e.clientX;
+        const dropY = e.clientY;
+
+        // 2. Loop through all pots to see if we dropped inside one
+        let droppedInPotIndex = -1;
+
+        potRefs.current.forEach((potElem, index) => {
+            if (!potElem || filledPots[index]) return; // Skip if pot invalid or already full
+
+            const rect = potElem.getBoundingClientRect();
+
+            // Simple rectangle collision check
+            if (
+                dropX >= rect.left &&
+                dropX <= rect.right &&
+                dropY >= rect.top &&
+                dropY <= rect.bottom
+            ) {
+                droppedInPotIndex = index;
+            }
+        });
+
+        // 3. Handle Drop
+        if (droppedInPotIndex !== -1) {
+            // Valid Drop! Snap into pot.
+            const newFilled = [...filledPots];
+            newFilled[droppedInPotIndex] = true;
+            setFilledPots(newFilled);
+
+            // Visual feedback (optional console log for now)
+            console.log(`Planted in Pot ${droppedInPotIndex + 1}!`);
+        } else {
+            // Invalid Drop - logic resets automatically because isDragging becomes false 
+            // and the component re-renders the Seed back in the supply header.
+            console.log("Returned to supply");
+        }
     };
 
     // Attach global listeners for move/up to ensure we catch events even if cursor leaves the element
@@ -76,6 +119,8 @@ const PowerGarden = ({ base, exponent }) => {
             window.removeEventListener('pointerup', handlePointerUp);
         };
     }, [isDragging, offset]);
+
+    const allFilled = filledPots.every(Boolean);
 
     return (
         <div className="power-garden-container" style={{
@@ -143,23 +188,49 @@ const PowerGarden = ({ base, exponent }) => {
                         {/* The Draggable Seed */}
                         {/* If dragging, we use fixed position to float above everything. 
                             If not dragging, it sits static in the supply. */}
-                        <Seed
-                            value={base}
-                            onPointerDown={handlePointerDown}
-                            style={isDragging ? {
-                                position: 'fixed',
-                                left: 0,
-                                top: 0,
-                                transform: `translate(${position.x}px, ${position.y}px)`,
-                                zIndex: 9999,
-                                cursor: 'grabbing',
-                                pointerEvents: 'none' // let events pass through to document for move handler
-                            } : {
-                                cursor: 'grab'
-                            }}
-                        />
+                        {!allFilled ? (
+                            <Seed
+                                value={base}
+                                onPointerDown={handlePointerDown}
+                                style={isDragging ? {
+                                    position: 'fixed',
+                                    left: 0,
+                                    top: 0,
+                                    transform: `translate(${position.x}px, ${position.y}px)`,
+                                    zIndex: 9999,
+                                    cursor: 'grabbing',
+                                    pointerEvents: 'none' // let events pass through to document for move handler
+                                } : {
+                                    cursor: 'grab'
+                                }}
+                            />
+                        ) : (
+                            /* All Filled - Show Success Message or Static Seed */
+                            <div style={{
+                                width: '100%',
+                                height: '100%',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                fontSize: '2.5rem'
+                            }}>
+                                ✅
+                            </div>
+                        )}
                     </div>
                 </div>
+
+                {allFilled && (
+                    <div style={{
+                        marginTop: '-20px',
+                        color: '#2e7d32',
+                        fontWeight: 'bold',
+                        fontSize: '1.2rem',
+                        animation: 'fadeIn 0.5s ease-in'
+                    }}>
+                        All pots are planted! 🌱
+                    </div>
+                )}
 
                 {/* Arrow pointing down */}
                 <div style={{ fontSize: '2rem', color: '#8d6e63' }}>⬇</div>

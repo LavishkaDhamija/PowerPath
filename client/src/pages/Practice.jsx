@@ -3,6 +3,8 @@ import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import PowerVisualizer from '../components/PowerVisualizer';
 import PowerGarden from '../components/PowerGarden';
+import { ScreenCapture } from 'react-screen-capture';
+import GardenCardView from '../components/GardenCardView';
 
 export default function Practice() {
     const navigate = useNavigate();
@@ -75,6 +77,7 @@ export default function Practice() {
     const [fullScreenNotice, setFullScreenNotice] = useState('');
     const [isPaused, setIsPaused] = useState(false);
     const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+    const [lastCaptureImage, setLastCaptureImage] = useState('');
 
     // Unified Animation Sequence: Manages the structured reveal lifecycle
     useEffect(() => {
@@ -213,6 +216,11 @@ export default function Practice() {
     const onSubmit = async (e) => {
         e.preventDefault();
         await handleSubmission(answer);
+    };
+
+    const handleScreenCapture = (base64Image) => {
+        setLastCaptureImage(base64Image);
+        console.log('Garden Card Captured! Preview ready.');
     };
 
     if (loading) {
@@ -466,6 +474,89 @@ export default function Practice() {
                                     </div>
                                 )}
                             </div>
+                        </div>
+                    )}
+
+                    {/* Garden Card Capture Section - Only shown when results are ready */}
+                    {showSummary && result?.isCorrect && (
+                        <div style={{ marginTop: '40px', borderTop: '2px solid #eee', paddingTop: '40px' }}>
+                            <ScreenCapture onEndCapture={handleScreenCapture}>
+                                {({ onStartCapture }) => (
+                                    <div style={{ textAlign: 'center' }}>
+                                        <GardenCardView
+                                            base={question.base}
+                                            exponent={question.exponent}
+                                            result={result}
+                                            feedbackMessage={feedbackMessage}
+                                        />
+                                        <button
+                                            onClick={onStartCapture}
+                                            className="btn"
+                                            style={{
+                                                marginTop: '20px',
+                                                background: '#689f38',
+                                                color: 'white',
+                                                padding: '12px 30px',
+                                                borderRadius: '30px',
+                                                fontSize: '1.1rem',
+                                                fontWeight: 'bold',
+                                                boxShadow: '0 4px 12px rgba(104, 159, 56, 0.3)',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                transition: 'transform 0.2s'
+                                            }}
+                                            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                                            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                        >
+                                            💾 Save Garden Card
+                                        </button>
+
+                                        {lastCaptureImage && (
+                                            <div style={{ marginTop: '30px', animation: 'fadeIn 0.8s ease-out', padding: '20px', backgroundColor: '#f9fbf9', borderRadius: '15px', border: '1px solid #e8f5e9' }}>
+                                                <p style={{ color: '#558b2f', fontWeight: 'bold', marginBottom: '15px' }}>Your Captured Card:</p>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+                                                    <img
+                                                        src={lastCaptureImage}
+                                                        alt="capture preview"
+                                                        style={{ width: '200px', borderRadius: '12px', border: '3px solid #fff', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}
+                                                    />
+                                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                                        <a
+                                                            href={lastCaptureImage}
+                                                            download={`my_power_garden_${question.base}_${question.exponent}.png`}
+                                                            className="btn"
+                                                            style={{
+                                                                background: '#2d6a4f',
+                                                                color: 'white',
+                                                                padding: '8px 20px',
+                                                                borderRadius: '20px',
+                                                                textDecoration: 'none',
+                                                                fontSize: '0.9rem'
+                                                            }}
+                                                        >
+                                                            ⬇️ Download
+                                                        </a>
+                                                        <button
+                                                            onClick={() => setLastCaptureImage('')}
+                                                            className="btn"
+                                                            style={{
+                                                                background: '#ef5350',
+                                                                color: 'white',
+                                                                padding: '8px 20px',
+                                                                borderRadius: '20px',
+                                                                fontSize: '0.9rem',
+                                                                border: 'none'
+                                                            }}
+                                                        >
+                                                            🗑️ Clear
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </ScreenCapture>
                         </div>
                     )}
                 </div>

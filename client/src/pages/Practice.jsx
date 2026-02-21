@@ -232,6 +232,26 @@ export default function Practice() {
                                     Great! All pots are planted 🌱
                                 </div>
                             )}
+
+                            {showExpression && (
+                                <div
+                                    className="fade-in"
+                                    style={{
+                                        marginTop: '20px',
+                                        fontSize: '2.5rem',
+                                        fontFamily: "'Courier New', monospace",
+                                        color: '#2d6a4f', // Soft dark green (var(--success-text))
+                                        backgroundColor: '#fff',
+                                        padding: '15px 30px',
+                                        borderRadius: '15px',
+                                        display: 'inline-block',
+                                        boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+                                        border: '2px solid #e0e0e0'
+                                    }}
+                                >
+                                    {Array(question.exponent).fill(question.base).join(" × ")}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

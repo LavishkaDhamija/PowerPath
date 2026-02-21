@@ -31,6 +31,7 @@ export default function Practice() {
             setQuestion(response.data);
             setAnswer(''); // Clear previous answer
             setGardenComplete(false); // Reset garden state
+            setShowExpression(false); // Reset expression state
         } catch (error) {
             console.error('Error fetching question:', error);
         } finally {
@@ -49,6 +50,7 @@ export default function Practice() {
     const [slowMode, setSlowMode] = useState(true);
     const [feedbackMessage, setFeedbackMessage] = useState('');
     const [gardenComplete, setGardenComplete] = useState(false);
+    const [showExpression, setShowExpression] = useState(false);
 
     const onSubmit = async (e) => {
         e.preventDefault();
@@ -213,7 +215,10 @@ export default function Practice() {
                             <PowerGarden
                                 base={question.base}
                                 exponent={question.exponent}
-                                onAllPotsFilled={() => setGardenComplete(true)}
+                                onAllPotsFilled={() => {
+                                    setGardenComplete(true);
+                                    setShowExpression(true);
+                                }}
                             />
 
                             {gardenComplete && (

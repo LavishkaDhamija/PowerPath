@@ -11,6 +11,7 @@ const PowerGarden = ({ base, exponent }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [position, setPosition] = useState({ x: 0, y: 0 }); // Current cursor/seed position
     const [offset, setOffset] = useState({ x: 0, y: 0 });     // Offset to keep seed under cursor
+    const [hoveredPotIndex, setHoveredPotIndex] = useState(null); // Which pot is currently being hovered
 
     // --- Refs for Collision Detection ---
     const seedRef = useRef(null);
@@ -52,6 +53,22 @@ const PowerGarden = ({ base, exponent }) => {
         const newY = e.clientY - offset.y;
 
         setPosition({ x: newX, y: newY });
+
+        // --- Hover Detection ---
+        let currentHoverIndex = null;
+        potRefs.current.forEach((potElem, index) => {
+            if (!potElem || filledPots[index]) return;
+            const rect = potElem.getBoundingClientRect();
+            if (
+                e.clientX >= rect.left &&
+                e.clientX <= rect.right &&
+                e.clientY >= rect.top &&
+                e.clientY <= rect.bottom
+            ) {
+                currentHoverIndex = index;
+            }
+        });
+        setHoveredPotIndex(currentHoverIndex);
     };
 
     const handlePointerUp = (e) => {
@@ -59,7 +76,7 @@ const PowerGarden = ({ base, exponent }) => {
 
         e.preventDefault();
         setIsDragging(false);
-
+        setHoveredPotIndex(null); // Reset hover on release
         // --- Collision Detection Logic ---
         // 1. Get current seed center (using the last known cursor position and offset)
         // Note: The cursor position IS the transformation origin because we used offset.
@@ -249,7 +266,11 @@ const PowerGarden = ({ base, exponent }) => {
                 }}>
                     {pots.map((potId, index) => (
                         <div key={potId} ref={el => potRefs.current[index] = el}>
-                            <Pot index={index} filled={filledPots[index]} />
+                            <Pot
+                                index={index}
+                                filled={filledPots[index]}
+                                isHovered={hoveredPotIndex === index}
+                            />
                         </div>
                     ))}
                 </div>

@@ -52,6 +52,17 @@ export default function Practice() {
     const [gardenComplete, setGardenComplete] = useState(false);
     const [showExpression, setShowExpression] = useState(false);
 
+    // Effect to handle structured delay before showing the math expression
+    useEffect(() => {
+        let timer;
+        if (gardenComplete) {
+            timer = setTimeout(() => {
+                setShowExpression(true);
+            }, 300); // 300ms structured pause
+        }
+        return () => clearTimeout(timer);
+    }, [gardenComplete]);
+
     const onSubmit = async (e) => {
         e.preventDefault();
 
@@ -215,43 +226,47 @@ export default function Practice() {
                             <PowerGarden
                                 base={question.base}
                                 exponent={question.exponent}
-                                onAllPotsFilled={() => {
-                                    setGardenComplete(true);
-                                    setShowExpression(true);
-                                }}
+                                onAllPotsFilled={() => setGardenComplete(true)}
                             />
 
-                            {gardenComplete && (
-                                <div style={{
-                                    marginTop: '20px',
-                                    color: '#2e7d32',
-                                    fontSize: '1.2rem',
-                                    fontWeight: 'bold',
-                                    animation: 'fadeIn 0.5s ease-in'
-                                }}>
-                                    Great! All pots are planted 🌱
-                                </div>
-                            )}
+                            {/* Stable container for feedback and expression to prevent jumping */}
+                            <div style={{ minHeight: '160px', marginTop: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                {gardenComplete && (
+                                    <div style={{
+                                        color: '#2e7d32',
+                                        fontSize: '1.3rem',
+                                        fontWeight: 'bold',
+                                        animation: 'fadeIn 0.5s ease-in',
+                                        marginBottom: '20px'
+                                    }}>
+                                        Great! All pots are planted 🌱
+                                    </div>
+                                )}
 
-                            {showExpression && (
-                                <div
-                                    className="fade-in"
-                                    style={{
-                                        marginTop: '20px',
-                                        fontSize: '2.5rem',
-                                        fontFamily: "'Courier New', monospace",
-                                        color: '#2d6a4f', // Soft dark green (var(--success-text))
-                                        backgroundColor: '#fff',
-                                        padding: '15px 30px',
-                                        borderRadius: '15px',
-                                        display: 'inline-block',
-                                        boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
-                                        border: '2px solid #e0e0e0'
-                                    }}
-                                >
-                                    {Array(question.exponent).fill(question.base).join(" × ")}
-                                </div>
-                            )}
+                                {showExpression && (
+                                    <div
+                                        className="fade-in"
+                                        style={{
+                                            fontSize: '3.8rem',
+                                            fontFamily: "'Courier New', monospace",
+                                            fontWeight: 'bold',
+                                            color: '#2d6a4f', // Soft dark green
+                                            backgroundColor: '#ffffff',
+                                            padding: '20px 60px',
+                                            borderRadius: '24px',
+                                            boxShadow: '0 8px 20px rgba(0,0,0,0.06)',
+                                            border: '3px solid #c8e6c9',
+                                            letterSpacing: '0.15em',
+                                            lineHeight: '1',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        {Array(question.exponent).fill(question.base).join(" \u00d7 ")}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>

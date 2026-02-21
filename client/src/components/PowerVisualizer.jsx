@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-export default function PowerVisualizer({ base, exponent, slowMode = true }) {
+export default function PowerVisualizer({ base, exponent, slowMode = true, providedResult }) {
     const [elements, setElements] = useState([]);
     const [showResult, setShowResult] = useState(false);
 
@@ -8,19 +8,16 @@ export default function PowerVisualizer({ base, exponent, slowMode = true }) {
         // Reset result when base/exponent changes
         setShowResult(false);
 
-        // Calculate total items (e.g., 2^3 = 8 items)
-        const total = Math.pow(base, exponent);
+        // Calculate total items ONLY if provided by backend/parent
+        // No frontend Math.pow allowed
+        const total = providedResult || 0;
         const newElements = Array.from({ length: total }, (_, i) => i);
         setElements(newElements);
 
-        // Calculate Delay based on Mode
-        // Standard: 200ms per block
-        // Slow: 500ms per block
-        const perBlockDelay = slowMode ? 500 : 200;
+        console.log('PowerVisualizer: Using provided result:', providedResult);
 
-        // Total animation time = (total blocks * perBlockDelay) + buffer
-        // Note: We use 'exponent' for the multiplication view, but 'total' was for grid view.
-        // For the multiplication view loop:
+        // Calculate Delay based on Mode
+        const perBlockDelay = slowMode ? 500 : 200;
         const delay = (exponent * perBlockDelay) + 500;
 
         const timer = setTimeout(() => {
@@ -28,7 +25,7 @@ export default function PowerVisualizer({ base, exponent, slowMode = true }) {
         }, delay);
 
         return () => clearTimeout(timer);
-    }, [base, exponent, slowMode]);
+    }, [base, exponent, slowMode, providedResult]);
 
     return (
         <div className="visualizer-container" style={{
@@ -109,7 +106,7 @@ export default function PowerVisualizer({ base, exponent, slowMode = true }) {
                         color: '#2e7d32',
                         animation: 'fadeIn 0.5s ease-in'
                     }}>
-                        = {Math.pow(base, exponent)}
+                        = {providedResult}
                     </div>
                 )}
             </div>

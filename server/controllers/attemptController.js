@@ -81,6 +81,7 @@ const submitAnswer = async (req, res, next) => {
             isCorrect: attempt.isCorrect,
             correctAnswer: attempt.correctAnswer,
             accuracy: accuracy.toFixed(2), // 2 decimal places
+            level: studentDoc ? studentDoc.currentLevel : 1,
             message: attempt.isCorrect ? 'Correct!' : 'Incorrect'
         });
 

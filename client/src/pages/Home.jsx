@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import CaptureTest from '../components/CaptureTest';
 
 export default function Home() {
     const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function Home() {
             textAlign: 'center',
             animation: 'fadeIn 1.5s ease-in-out'
         }}>
+            <CaptureTest />
             {/* 1) Big Heading */}
             <h1 style={{
                 fontSize: '3.5rem',

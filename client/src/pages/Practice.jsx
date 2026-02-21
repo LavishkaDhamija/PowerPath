@@ -72,10 +72,13 @@ export default function Practice() {
     const [showResult, setShowResult] = useState(false);
     const [showSummary, setShowSummary] = useState(false); // New state to delay feedback card
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [fullScreenNotice, setFullScreenNotice] = useState('');
+    const [isPaused, setIsPaused] = useState(false);
+    const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 
     // Unified Animation Sequence: Manages the structured reveal lifecycle
     useEffect(() => {
-        if (!gardenComplete) return;
+        if (!gardenComplete || isPaused) return;
 
         const timers = [];
 
@@ -97,7 +100,7 @@ export default function Practice() {
         return () => {
             timers.forEach(t => clearTimeout(t));
         };
-    }, [gardenComplete]);
+    }, [gardenComplete, isPaused]);
 
     // Fullscreen Toggle Logic
     const toggleFullscreen = async () => {
@@ -118,10 +121,46 @@ export default function Practice() {
     // Monitor Fullscreen changes (handles ESC key exit)
     useEffect(() => {
         const handleFullscreenChange = () => {
-            setIsFullscreen(!!document.fullscreenElement);
+            const isNowFull = !!document.fullscreenElement;
+
+            // If we were in focus mode and just exited
+            if (isFullscreen && !isNowFull) {
+                setFullScreenNotice("Focus mode paused.");
+                setTimeout(() => setFullScreenNotice(''), 3000);
+            }
+
+            setIsFullscreen(isNowFull);
         };
+
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                setIsPaused(true);
+            } else {
+                setIsPaused(false);
+                setFullScreenNotice("Welcome back to your garden 🌱");
+                setTimeout(() => setFullScreenNotice(''), 3000);
+            }
+        };
+
         document.addEventListener('fullscreenchange', handleFullscreenChange);
-        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [isFullscreen]);
+
+    // Handle Window Resize: Monitors screen dimensions for layout calibration
+    useEffect(() => {
+        const handleResize = () => {
+            setScreenWidth(window.innerWidth);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
     }, []);
 
     const handleSubmission = async (currentAnswer) => {
@@ -216,6 +255,25 @@ export default function Practice() {
                     </button>
                 </div>
             </div>
+
+            {fullScreenNotice && (
+                <div
+                    className="fade-in"
+                    style={{
+                        textAlign: 'center',
+                        padding: '10px',
+                        backgroundColor: '#f1f3f4',
+                        color: '#5f6368',
+                        borderRadius: '8px',
+                        marginBottom: '15px',
+                        fontSize: '0.9rem',
+                        fontStyle: 'italic',
+                        border: '1px solid #e0e0e0'
+                    }}
+                >
+                    {fullScreenNotice}
+                </div>
+            )}
 
             <div className='question-card'>
                 <div className='question-display' style={{

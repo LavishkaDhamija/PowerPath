@@ -1,6 +1,6 @@
 import React from 'react';
 
-const GardenCard = ({ image, base, exponent, correctAnswer, createdAt, onClick }) => {
+const GardenCard = ({ image, base, exponent, isCorrect, correctAnswer, createdAt, onClick, onDelete }) => {
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         return date.toLocaleDateString(undefined, {
@@ -12,6 +12,7 @@ const GardenCard = ({ image, base, exponent, correctAnswer, createdAt, onClick }
 
     return (
         <div
+            className="garden-card"
             onClick={onClick}
             style={{
                 backgroundColor: '#ffffff',
@@ -24,6 +25,7 @@ const GardenCard = ({ image, base, exponent, correctAnswer, createdAt, onClick }
                 display: 'flex',
                 flexDirection: 'column',
                 height: '100%',
+                position: 'relative',
                 fontFamily: "'Outfit', sans-serif"
             }}
             onMouseOver={(e) => {
@@ -35,6 +37,44 @@ const GardenCard = ({ image, base, exponent, correctAnswer, createdAt, onClick }
                 e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.05)';
             }}
         >
+            {/* Delete Button - Subtle and Calm */}
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                }}
+                style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    border: '1px solid #eee',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    zIndex: 2,
+                    fontSize: '1rem',
+                    color: '#999',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+                onMouseOver={(e) => {
+                    e.currentTarget.style.color = '#e57373';
+                    e.currentTarget.style.backgroundColor = '#fff';
+                }}
+                onMouseOut={(e) => {
+                    e.currentTarget.style.color = '#999';
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                }}
+                title="Remove this card"
+            >
+                ✕
+            </button>
+
             {/* Thumbnail Image */}
             <div style={{
                 width: '100%',
@@ -52,8 +92,7 @@ const GardenCard = ({ image, base, exponent, correctAnswer, createdAt, onClick }
                     style={{
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover',
-                        transition: 'transform 0.5s ease'
+                        objectFit: 'cover'
                     }}
                 />
             </div>
@@ -76,16 +115,33 @@ const GardenCard = ({ image, base, exponent, correctAnswer, createdAt, onClick }
                     }}>
                         {base}<sup>{exponent}</sup> = {correctAnswer}
                     </h3>
+
+                    {/* Reinforcement Badge */}
+                    <div style={{
+                        display: 'inline-block',
+                        padding: '4px 12px',
+                        borderRadius: '20px',
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        marginTop: '5px',
+                        marginBottom: '10px',
+                        backgroundColor: isCorrect ? '#e8f5e9' : '#fff3e0',
+                        color: isCorrect ? '#2d6a4f' : '#ef6c00',
+                        border: `1px solid ${isCorrect ? '#c8e6c9' : '#ffe0b2'}`,
+                        transition: 'all 0.3s ease'
+                    }}>
+                        {isCorrect ? 'Great Growth 🌿' : 'Learning Flower 🌸'}
+                    </div>
+
                     <p style={{
                         margin: 0,
                         color: '#999',
                         fontSize: '0.85rem'
                     }}>
-                        Captured on {formatDate(createdAt)}
+                        {formatDate(createdAt)}
                     </p>
                 </div>
 
-                {/* Small indicator decoration */}
                 <div style={{
                     marginTop: '12px',
                     fontSize: '1.2rem',

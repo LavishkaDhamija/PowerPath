@@ -244,10 +244,10 @@ export default function Practice() {
         };
         setGardenGallery(prev => {
             const updated = [newItem, ...prev];
-            return updated.slice(0, 10); // Keep only the last 10 entries
+            return updated.slice(0, 12); // Keep only the last 12 entries (Oldest removed automatically)
         });
         setLastCaptureImage(base64Image);
-        console.log('Garden Card added to Gallery and persisted:', newItem.id);
+        console.log('Garden Card added to Gallery (Limited to 12 items):', newItem.id);
     };
 
     const handleScreenCapture = (base64Image) => {
@@ -621,6 +621,21 @@ export default function Practice() {
                                                         >
                                                             ⬇️ Download
                                                         </a>
+                                                        <button
+                                                            onClick={() => navigate('/gallery')}
+                                                            className="btn"
+                                                            style={{
+                                                                background: '#dcedc8',
+                                                                color: '#2d6a4f',
+                                                                padding: '8px 20px',
+                                                                borderRadius: '20px',
+                                                                fontSize: '0.9rem',
+                                                                border: '1px solid #c8e6c9',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                        >
+                                                            🖼️ View Gallery
+                                                        </button>
                                                         <button
                                                             onClick={() => setLastCaptureImage('')}
                                                             className="btn"

@@ -5,7 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Practice from './pages/Practice';
-import Gallery from './pages/Gallery';
+import GardenGallery from './pages/GardenGallery';
 import './App.css';
 
 import PrivateRoute from './components/PrivateRoute';
@@ -38,7 +38,7 @@ function App() {
           path="/gallery"
           element={
             <PrivateRoute>
-              <Gallery />
+              <GardenGallery />
             </PrivateRoute>
           }
         />

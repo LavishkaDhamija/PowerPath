@@ -32,6 +32,9 @@ export default function Practice() {
             setAnswer(''); // Clear previous answer
             setGardenComplete(false); // Reset garden state
             setShowExpression(false); // Reset expression state
+            setShowPlants(false);
+            setShowFlower(false);
+            setShowResult(false);
         } catch (error) {
             console.error('Error fetching question:', error);
         } finally {
@@ -43,6 +46,18 @@ export default function Practice() {
         fetchQuestion();
     }, [navigate]);
 
+    // Robust State Reset: Clears all garden-related UI whenever the question parameters change.
+    // This prevents "flashing" of old results on new questions.
+    useEffect(() => {
+        setGardenComplete(false);
+        setShowExpression(false);
+        setShowPlants(false);
+        setShowFlower(false);
+        setShowResult(false);
+        setAnswer('');
+        setError('');
+    }, [question.base, question.exponent]);
+
     const [error, setError] = useState('');
     const [showExplain, setShowExplain] = useState(false);
     const [result, setResult] = useState(null);
@@ -51,16 +66,31 @@ export default function Practice() {
     const [feedbackMessage, setFeedbackMessage] = useState('');
     const [gardenComplete, setGardenComplete] = useState(false);
     const [showExpression, setShowExpression] = useState(false);
+    const [showPlants, setShowPlants] = useState(false);
+    const [showFlower, setShowFlower] = useState(false);
+    const [showResult, setShowResult] = useState(false);
 
-    // Effect to handle structured delay before showing the math expression
+    // Unified Animation Sequence: Manages the structured reveal lifecycle
     useEffect(() => {
-        let timer;
-        if (gardenComplete) {
-            timer = setTimeout(() => {
-                setShowExpression(true);
-            }, 300); // 300ms structured pause
-        }
-        return () => clearTimeout(timer);
+        if (!gardenComplete) return;
+
+        const timers = [];
+
+        // 1. Show Expression (300ms pause for task boundary)
+        timers.push(setTimeout(() => setShowExpression(true), 300));
+
+        // 2. Grow Plants (800ms = 300 + 500ms pause)
+        timers.push(setTimeout(() => setShowPlants(true), 800));
+
+        // 3. Bloom Flower (1500ms = 800 + 700ms pause)
+        timers.push(setTimeout(() => setShowFlower(true), 1500));
+
+        // 4. Reveal Result (2000ms = 1500 + 500ms pause)
+        timers.push(setTimeout(() => setShowResult(true), 2000));
+
+        return () => {
+            timers.forEach(t => clearTimeout(t));
+        };
     }, [gardenComplete]);
 
     const onSubmit = async (e) => {
@@ -227,6 +257,8 @@ export default function Practice() {
                                 base={question.base}
                                 exponent={question.exponent}
                                 onAllPotsFilled={() => setGardenComplete(true)}
+                                showPlants={showPlants}
+                                showFlower={showFlower}
                             />
 
                             {/* Stable container for feedback and expression to prevent jumping */}
@@ -260,10 +292,31 @@ export default function Practice() {
                                             lineHeight: '1',
                                             display: 'inline-flex',
                                             alignItems: 'center',
-                                            justifyContent: 'center'
+                                            justifyContent: 'center',
+                                            transition: 'all 0.5s ease-in-out'
                                         }}
                                     >
                                         {Array(question.exponent).fill(question.base).join(" \u00d7 ")}
+                                        {showResult && (
+                                            <span className="fade-in" style={{ marginLeft: '20px', color: '#1b5e20' }}>
+                                                = {Math.pow(question.base, question.exponent)}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+
+                                {showResult && (
+                                    <div
+                                        className="fade-in"
+                                        style={{
+                                            marginTop: '20px',
+                                            color: '#2d6a4f', // Soft dark green
+                                            fontSize: '1.4rem',
+                                            fontWeight: '600',
+                                            fontStyle: 'italic'
+                                        }}
+                                    >
+                                        You grew the answer 🌸
                                     </div>
                                 )}
                             </div>

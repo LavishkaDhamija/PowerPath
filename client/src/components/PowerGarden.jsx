@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Seed from './Seed';
 import Pot from './Pot';
 
-const PowerGarden = ({ base, exponent, onAllPotsFilled }) => {
+const PowerGarden = ({ base, exponent, onAllPotsFilled, showPlants, showFlower }) => {
     // Generate an array for pots based on the exponent
     const pots = Array.from({ length: exponent }, (_, i) => i + 1);
 
@@ -285,27 +285,68 @@ const PowerGarden = ({ base, exponent, onAllPotsFilled }) => {
                 {/* Arrow pointing down */}
                 <div style={{ fontSize: '2rem', color: '#8d6e63' }}>⬇</div>
 
-                {/* Pots Area */}
+                {/* Pots Area - Wrapped for stable positioning during flower merge */}
                 <div className="pots-container" ref={gardenRef} style={{
+                    position: 'relative',
                     display: 'flex',
                     flexWrap: 'wrap',
                     justifyContent: 'center',
                     gap: '20px',
-                    padding: '20px',
-                    backgroundColor: '#dcedc8', // Slightly darker green "grass"
+                    padding: '40px 20px',
+                    backgroundColor: '#dcedc8', // Stable grass background
                     borderRadius: '15px',
                     width: '100%',
+                    minHeight: '200px', // Ensure height stability
                     boxSizing: 'border-box'
                 }}>
-                    {pots.map((potId, index) => (
-                        <div key={potId} ref={el => potRefs.current[index] = el}>
-                            <Pot
-                                index={index}
-                                filled={filledPots[index]}
-                                isHovered={hoveredPotIndex === index}
-                            />
+                    {/* Individual Pots - Fade Out when blooming */}
+                    <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        justifyContent: 'center',
+                        gap: '20px',
+                        width: '100%',
+                        transition: 'opacity 0.6s ease-in-out',
+                        opacity: showFlower ? 0 : 1,
+                        pointerEvents: showFlower ? 'none' : 'auto'
+                    }}>
+                        {pots.map((potId, index) => (
+                            <div key={potId} ref={el => potRefs.current[index] = el}>
+                                <Pot
+                                    index={index}
+                                    filled={filledPots[index]}
+                                    isHovered={hoveredPotIndex === index}
+                                    showPlants={showPlants}
+                                    showFlower={showFlower}
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* The Big Blooming Flower Reveal */}
+                    {showFlower && (
+                        <div
+                            className="fade-in"
+                            style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                fontSize: '6rem',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                zIndex: 5
+                            }}
+                        >
+                            <span style={{
+                                animation: 'fadeIn 0.8s ease-out',
+                                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))'
+                            }}>
+                                🌻
+                            </span>
                         </div>
-                    ))}
+                    )}
                 </div>
             </div>
         </div>

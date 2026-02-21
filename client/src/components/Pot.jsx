@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Pot = ({ index, filled, isHovered }) => {
+const Pot = ({ index, filled, isHovered, showPlants, showFlower }) => {
     // Define calm, organic colors
     const colors = {
         defaultPot: '#bcaaa4',
@@ -27,7 +27,8 @@ const Pot = ({ index, filled, isHovered }) => {
                 alignItems: 'center',
                 transition: 'all 0.3s ease-in-out',
                 position: 'relative',
-                cursor: (isHovered && !filled) ? 'copy' : 'default'
+                cursor: (isHovered && !filled) ? 'copy' : 'default',
+                transform: (showPlants && filled) ? 'scale(1.05)' : 'scale(1)',
             }}
         >
             <span style={{
@@ -41,20 +42,25 @@ const Pot = ({ index, filled, isHovered }) => {
             </span>
 
             {/* Drop Zone Visual */}
-            <div style={{
-                width: '70px',
-                height: '70px',
-                borderRadius: '50%',
-                border: filled ? 'none' : '2px dashed #8d6e63',
-                backgroundColor: filled ? 'transparent' : 'rgba(255,255,255,0.2)',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                color: '#5d4037',
-                fontSize: '0.8rem',
-                textAlign: 'center'
-            }}>
-                {filled ? '🌱' : 'Drop seed here'}
+            <div
+                className="plant-visual"
+                style={{
+                    width: '70px',
+                    height: '70px',
+                    borderRadius: '50%',
+                    border: filled ? 'none' : '2px dashed #8d6e63',
+                    backgroundColor: filled ? 'transparent' : 'rgba(255,255,255,0.2)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    color: '#5d4037',
+                    fontSize: showPlants ? '2rem' : '1.5rem',
+                    textAlign: 'center',
+                    transition: 'all 0.5s ease-in-out',
+                    opacity: filled ? 1 : 0.5
+                }}
+            >
+                {filled ? (showPlants ? '🌿' : '🌱') : (isHovered ? '?' : 'Drop')}
             </div>
         </div>
     );

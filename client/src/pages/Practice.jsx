@@ -320,6 +320,20 @@ export default function Practice() {
                     >
                         🐢 Slow Mode: {slowMode ? 'ON' : 'OFF'}
                     </button>
+                    <button
+                        onClick={() => navigate('/gallery')}
+                        className='btn'
+                        style={{
+                            background: '#dcedc8',
+                            color: '#33691e',
+                            fontSize: '0.9rem',
+                            padding: '6px 12px',
+                            border: '1px solid #c5e1a5',
+                            borderRadius: '8px'
+                        }}
+                    >
+                        🖼 Gallery
+                    </button>
                 </div>
             </div>
 

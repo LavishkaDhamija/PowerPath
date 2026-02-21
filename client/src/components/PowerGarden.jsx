@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Seed from './Seed';
 import Pot from './Pot';
 
-const PowerGarden = ({ base, exponent, onAllPotsFilled, showPlants, showFlower, isSubmitting }) => {
+const PowerGarden = ({ base, exponent, onAllPotsFilled, showPlants, showFlower, isSubmitting, screenWidth }) => {
     // Generate an array for pots based on the exponent
     const pots = Array.from({ length: exponent }, (_, i) => i + 1);
 
@@ -21,6 +21,9 @@ const PowerGarden = ({ base, exponent, onAllPotsFilled, showPlants, showFlower, 
     const hasTriggeredRef = useRef(false); // Prevent duplicate triggers
     const completionTimeoutRef = useRef(null); // Ref to clear timeout
 
+    // Determine layout based on screen width
+    const isMobile = screenWidth < 600;
+
     // Reset when question changes
     useEffect(() => {
         setFilledPots(new Array(exponent).fill(false));
@@ -35,6 +38,19 @@ const PowerGarden = ({ base, exponent, onAllPotsFilled, showPlants, showFlower, 
             if (completionTimeoutRef.current) clearTimeout(completionTimeoutRef.current);
         };
     }, []);
+
+    // Resize Safety: If the screen resizes while dragging, cancel the drag
+    // to prevent the seed from snapping to an old layout position.
+    useEffect(() => {
+        if (isDragging) {
+            setIsDragging(false);
+            setHoveredPotIndex(null);
+            document.body.style.userSelect = 'auto';
+            document.body.style.touchAction = 'auto';
+            setFeedback("Layout adjusted. Please try again 🌱");
+            setTimeout(() => setFeedback(""), 2000);
+        }
+    }, [screenWidth]);
 
     // Completion Trigger
     useEffect(() => {
@@ -53,104 +69,69 @@ const PowerGarden = ({ base, exponent, onAllPotsFilled, showPlants, showFlower, 
         e.preventDefault();
 
         // Disable text selection and touch scrolling during drag
-        e.currentTarget.setPointerCapture(e.pointerId);
+        document.body.style.userSelect = 'none';
+        document.body.style.touchAction = 'none';
 
-        const elem = e.currentTarget;
-        const rect = elem.getBoundingClientRect();
-
-        // Calculate offset so the seed stays under the cursor exactly where grabbed
-        const offsetX = e.clientX - rect.left;
-        const offsetY = e.clientY - rect.top;
-
-        setOffset({ x: offsetX, y: offsetY });
-        setPosition({ x: e.clientX - offsetX, y: e.clientY - offsetY });
+        const rect = e.currentTarget.getBoundingClientRect();
         setIsDragging(true);
+        setOffset({
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
+        });
+        setPosition({
+            x: e.clientX,
+            y: e.clientY
+        });
     };
 
     const handlePointerMove = (e) => {
         if (!isDragging) return;
 
-        e.preventDefault();
+        // Update seed position
+        setPosition({
+            x: e.clientX,
+            y: e.clientY
+        });
 
-        // Update position based on pointer minus offset
-        const newX = e.clientX - offset.x;
-        const newY = e.clientY - offset.y;
-
-        setPosition({ x: newX, y: newY });
-
-        // --- Hover Detection ---
-        let currentHoverIndex = null;
-        potRefs.current.forEach((potElem, index) => {
-            if (!potElem || filledPots[index]) return;
-            const rect = potElem.getBoundingClientRect();
+        // Hover Detection using "Live" Bounding Rects
+        // We recalculate these on every move to ensure absolute accuracy 
+        // during transitions or layout shifts.
+        let foundHover = null;
+        potRefs.current.forEach((potEl, index) => {
+            if (!potEl) return;
+            const rect = potEl.getBoundingClientRect();
             if (
                 e.clientX >= rect.left &&
                 e.clientX <= rect.right &&
                 e.clientY >= rect.top &&
                 e.clientY <= rect.bottom
             ) {
-                currentHoverIndex = index;
+                foundHover = index;
             }
         });
-        setHoveredPotIndex(currentHoverIndex);
+        setHoveredPotIndex(foundHover);
     };
 
     const handlePointerUp = (e) => {
         if (!isDragging) return;
 
-        e.preventDefault();
         setIsDragging(false);
-        setHoveredPotIndex(null); // Reset hover on release
-        // --- Collision Detection Logic ---
-        // 1. Get current seed center (using the last known cursor position and offset)
-        // Note: The cursor position IS the transformation origin because we used offset.
-        // position.x = clientX - offset.x
-        // We want the center of the 80x80 seed (so +40, +40)
-        // But actually, checking the Pointer coordinates (e.clientX, e.clientY) is simpler and usually sufficient.
+        setHoveredPotIndex(null);
 
-        const dropX = e.clientX;
-        const dropY = e.clientY;
+        // Restore interaction defaults
+        document.body.style.userSelect = 'auto';
+        document.body.style.touchAction = 'auto';
 
-        // 2. Loop through all pots to see if we dropped inside one
-        let droppedInPotIndex = -1;
-        let droppedOnFilledPot = false;
-
-        potRefs.current.forEach((potElem, index) => {
-            if (!potElem) return;
-
-            const rect = potElem.getBoundingClientRect();
-            const isInside = (
-                dropX >= rect.left &&
-                dropX <= rect.right &&
-                dropY >= rect.top &&
-                dropY <= rect.bottom
-            );
-
-            if (isInside) {
-                if (filledPots[index]) {
-                    droppedOnFilledPot = true;
-                } else {
-                    droppedInPotIndex = index;
-                }
+        if (hoveredPotIndex !== null) {
+            if (filledPots[hoveredPotIndex]) {
+                setFeedback("This pot already has a seed!");
+                setTimeout(() => setFeedback(""), 2000);
+            } else {
+                const newFilled = [...filledPots];
+                newFilled[hoveredPotIndex] = true;
+                setFilledPots(newFilled);
+                setFeedback(""); // Clear any old feedback
             }
-        });
-
-        // 3. Handle Drop
-        if (droppedInPotIndex !== -1) {
-            // Valid Drop! Snap into pot.
-            const newFilled = [...filledPots];
-            newFilled[droppedInPotIndex] = true;
-            setFilledPots(newFilled);
-            setFeedback(""); // Clear any error feedback
-            console.log(`Planted in Pot ${droppedInPotIndex + 1}!`);
-        } else if (droppedOnFilledPot) {
-            // Illegal drop - pot already full
-            setFeedback("This pot is already planted.");
-            setTimeout(() => setFeedback(""), 2000); // Clear after 2s
-            console.log("Pot already full");
-        } else {
-            // Invalid Drop - logic resets automatically
-            console.log("Returned to supply");
         }
     };
 
@@ -159,15 +140,12 @@ const PowerGarden = ({ base, exponent, onAllPotsFilled, showPlants, showFlower, 
         if (isDragging) {
             window.addEventListener('pointermove', handlePointerMove);
             window.addEventListener('pointerup', handlePointerUp);
-        } else {
-            window.removeEventListener('pointermove', handlePointerMove);
-            window.removeEventListener('pointerup', handlePointerUp);
         }
         return () => {
             window.removeEventListener('pointermove', handlePointerMove);
             window.removeEventListener('pointerup', handlePointerUp);
         };
-    }, [isDragging, offset]);
+    }, [isDragging, hoveredPotIndex, filledPots]);
 
     const allFilled = filledPots.every(Boolean);
 
@@ -245,7 +223,7 @@ const PowerGarden = ({ base, exponent, onAllPotsFilled, showPlants, showFlower, 
                                     position: 'fixed',
                                     left: 0,
                                     top: 0,
-                                    transform: `translate(${position.x}px, ${position.y}px)`,
+                                    transform: `translate(${position.x - offset.x}px, ${position.y - offset.y}px)`,
                                     zIndex: 9999,
                                     cursor: 'grabbing',
                                     pointerEvents: 'none' // let events pass through to document for move handler
@@ -299,24 +277,29 @@ const PowerGarden = ({ base, exponent, onAllPotsFilled, showPlants, showFlower, 
                 <div className="pots-container" ref={gardenRef} style={{
                     position: 'relative',
                     display: 'flex',
+                    flexDirection: isMobile ? 'column' : 'row',
                     flexWrap: 'wrap',
                     justifyContent: 'center',
+                    alignItems: 'center',
                     gap: '20px',
                     padding: '40px 20px',
                     backgroundColor: '#dcedc8', // Stable grass background
                     borderRadius: '15px',
                     width: '100%',
                     minHeight: '200px', // Ensure height stability
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    transition: 'flex-direction 0.5s ease-in-out'
                 }}>
                     {/* Individual Pots - Fade Out when blooming */}
                     <div style={{
                         display: 'flex',
+                        flexDirection: isMobile ? 'column' : 'row',
                         flexWrap: 'wrap',
                         justifyContent: 'center',
+                        alignItems: 'center',
                         gap: '20px',
                         width: '100%',
-                        transition: 'opacity 0.6s ease-in-out',
+                        transition: 'opacity 0.6s ease-in-out, flex-direction 0.5s ease-in-out',
                         opacity: showFlower ? 0 : 1,
                         pointerEvents: showFlower ? 'none' : 'auto'
                     }}>

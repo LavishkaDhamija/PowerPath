@@ -401,6 +401,7 @@ export default function Practice() {
                                 showPlants={showPlants}
                                 showFlower={showFlower && (result ? result.isCorrect : true)}
                                 isSubmitting={isSubmitting}
+                                screenWidth={screenWidth}
                             />
 
                             {/* Stable container for feedback and expression to prevent jumping */}

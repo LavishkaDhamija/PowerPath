@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create a centralized Axios instance
 const api = axios.create({
-    baseURL: 'http://localhost:5000/api', // Centralized base URL
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api', // Use env var for deployment, fallback to localhost for dev
     headers: {
         'Content-Type': 'application/json',
     },

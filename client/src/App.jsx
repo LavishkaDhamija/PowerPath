@@ -1,18 +1,22 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Practice from './pages/Practice';
+import GardenGallery from './pages/GardenGallery';
 import './App.css';
 
 import PrivateRoute from './components/PrivateRoute';
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+  const showNavbar = location.pathname !== '/';
+
   return (
-    <BrowserRouter>
-      <Navbar />
+    <>
+      {showNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -33,7 +37,23 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/gallery"
+          element={
+            <PrivateRoute>
+              <GardenGallery />
+            </PrivateRoute>
+          }
+        />
       </Routes>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }

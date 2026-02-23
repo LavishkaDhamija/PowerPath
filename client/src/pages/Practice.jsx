@@ -5,6 +5,7 @@ import PowerVisualizer from '../components/PowerVisualizer';
 import PowerGarden from '../components/PowerGarden';
 import { ScreenCapture } from 'react-screen-capture';
 import GardenCardView from '../components/GardenCardView';
+import html2canvas from 'html2canvas';
 
 export default function Practice() {
     const navigate = useNavigate();
@@ -59,6 +60,7 @@ export default function Practice() {
         setShowSummary(false); // Reset summary state
         setAnswer('');
         setError('');
+        hasCapturedRef.current = false; // Allow new capture for new question
     }, [question.base, question.exponent]);
 
     const [error, setError] = useState('');
@@ -78,6 +80,13 @@ export default function Practice() {
     const [isPaused, setIsPaused] = useState(false);
     const [screenWidth, setScreenWidth] = useState(window.innerWidth);
     const [lastCaptureImage, setLastCaptureImage] = useState('');
+    const [isAutoSaving, setIsAutoSaving] = useState(false);
+    const [gardenGallery, setGardenGallery] = useState(() => {
+        const saved = localStorage.getItem('gardenGallery');
+        return saved ? JSON.parse(saved) : [];
+    });
+    const hasCapturedRef = useRef(false);
+    const cardRef = useRef(null);
 
     // Unified Animation Sequence: Manages the structured reveal lifecycle
     useEffect(() => {
@@ -94,11 +103,8 @@ export default function Practice() {
         // 3. Bloom Flower (1500ms = 800 + 700ms pause)
         timers.push(setTimeout(() => setShowFlower(true), 1500));
 
-        // 4. Reveal Result (2000ms = 1500 + 500ms pause)
-        timers.push(setTimeout(() => setShowResult(true), 2000));
-
-        // 5. Show Summary Card (4000ms = 2000 + 2000ms observation time)
-        timers.push(setTimeout(() => setShowSummary(true), 4000));
+        // NOTE: Result and Summary are NOT auto-revealed anymore.
+        // They will be shown only AFTER the student submits their answer.
 
         return () => {
             timers.forEach(t => clearTimeout(t));
@@ -166,6 +172,11 @@ export default function Practice() {
         };
     }, []);
 
+    // Persist Gallery to localStorage
+    useEffect(() => {
+        localStorage.setItem('gardenGallery', JSON.stringify(gardenGallery));
+    }, [gardenGallery]);
+
     const handleSubmission = async (currentAnswer) => {
         if (!currentAnswer || isSubmitting) return;
 
@@ -218,48 +229,134 @@ export default function Practice() {
         await handleSubmission(answer);
     };
 
-    const handleScreenCapture = (base64Image) => {
+    const addToGallery = (base64Image) => {
+        const newItem = {
+            id: Date.now(),
+            base: question.base,
+            exponent: question.exponent,
+            isCorrect: result?.isCorrect,
+            correctAnswer: result?.correctAnswer,
+            image: base64Image,
+            createdAt: new Date().toISOString()
+        };
+        setGardenGallery(prev => {
+            const updated = [newItem, ...prev];
+            return updated.slice(0, 12); // Keep only the last 12 entries (Oldest removed automatically)
+        });
         setLastCaptureImage(base64Image);
-        console.log('Garden Card Captured! Preview ready.');
+        console.log('Garden Card added to Gallery (Limited to 12 items):', newItem.id);
     };
+
+    const handleScreenCapture = (base64Image) => {
+        addToGallery(base64Image);
+    };
+
+    // Automatic Capture Logic
+    useEffect(() => {
+        if (showResult && result?.isCorrect && !hasCapturedRef.current && cardRef.current) {
+            hasCapturedRef.current = true;
+            setIsAutoSaving(true);
+
+            // Short delay to ensure the UI has finished its transition
+            const timer = setTimeout(async () => {
+                try {
+                    const canvas = await html2canvas(cardRef.current, {
+                        backgroundColor: null,
+                        scale: 2, // Higher quality
+                        logging: false
+                    });
+                    const base64Image = canvas.toDataURL('image/png');
+                    addToGallery(base64Image);
+                    console.log('Automatic Garden Card Saved!');
+                } catch (err) {
+                    console.error('Auto-capture failed:', err);
+                } finally {
+                    setIsAutoSaving(false);
+                }
+            }, 600); // 600ms delay for visual stability
+
+            return () => clearTimeout(timer);
+        }
+    }, [showResult, result]);
 
     if (loading) {
         return <div className='container'><h2>Loading question...</h2></div>;
     }
 
     return (
-        <div className='container'>
-            <div className='practice-header' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{
+            maxWidth: '1100px',
+            margin: '0 auto',
+            padding: '0 20px',
+            overflowX: 'hidden',
+        }}>
+            {/* Clean Header */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '24px 0 16px',
+                borderBottom: '1px solid #e8e8e8',
+                marginBottom: '24px',
+            }}>
                 <div>
-                    <h1>Practice Mode (Level {question.level})</h1>
-                    <p>Solve the power problem below:</p>
+                    <h1 style={{
+                        fontSize: '1.6rem',
+                        fontWeight: 700,
+                        color: '#2e7d32',
+                        margin: '0 0 4px 0',
+                    }}>Practice Mode</h1>
+                    <p style={{
+                        fontSize: '0.9rem',
+                        color: '#999',
+                        margin: 0,
+                    }}>Level {question.level} — Solve the power problem below</p>
                 </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                         onClick={toggleFullscreen}
-                        className='btn'
                         style={{
-                            background: isFullscreen ? '#ffd1dc' : '#f0f4f8',
-                            color: '#333',
-                            fontSize: '0.9rem',
-                            padding: '6px 12px',
-                            border: '1px solid #d1d9e6',
-                            borderRadius: '8px'
+                            background: isFullscreen ? '#ffebee' : '#fafafa',
+                            color: isFullscreen ? '#c62828' : '#666',
+                            fontSize: '0.82rem',
+                            padding: '7px 14px',
+                            border: '1px solid #e0e0e0',
+                            borderRadius: '8px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
                         }}
                     >
-                        {isFullscreen ? '⏹ Exit Focus' : '🔍 Focus Mode'}
+                        {isFullscreen ? 'Exit Focus' : 'Focus Mode'}
                     </button>
                     <button
                         onClick={() => setSlowMode(!slowMode)}
-                        className='btn'
                         style={{
-                            background: slowMode ? '#a0c4ff' : '#eee',
-                            color: slowMode ? '#000' : '#444',
-                            fontSize: '0.9rem',
-                            padding: '6px 12px'
+                            background: slowMode ? '#e8f5e9' : '#fafafa',
+                            color: slowMode ? '#2e7d32' : '#666',
+                            fontSize: '0.82rem',
+                            padding: '7px 14px',
+                            border: `1px solid ${slowMode ? '#c8e6c9' : '#e0e0e0'}`,
+                            borderRadius: '8px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
                         }}
                     >
-                        🐢 Slow Mode: {slowMode ? 'ON' : 'OFF'}
+                        Slow Mode: {slowMode ? 'ON' : 'OFF'}
+                    </button>
+                    <button
+                        onClick={() => navigate('/gallery')}
+                        style={{
+                            background: '#fafafa',
+                            color: '#666',
+                            fontSize: '0.82rem',
+                            padding: '7px 14px',
+                            border: '1px solid #e0e0e0',
+                            borderRadius: '8px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                        }}
+                    >
+                        Gallery
                     </button>
                 </div>
             </div>
@@ -270,57 +367,72 @@ export default function Practice() {
                     style={{
                         textAlign: 'center',
                         padding: '10px',
-                        backgroundColor: '#f1f3f4',
-                        color: '#5f6368',
+                        backgroundColor: '#fafafa',
+                        color: '#888',
                         borderRadius: '8px',
-                        marginBottom: '15px',
-                        fontSize: '0.9rem',
+                        marginBottom: '16px',
+                        fontSize: '0.85rem',
                         fontStyle: 'italic',
-                        border: '1px solid #e0e0e0'
+                        border: '1px solid #eee'
                     }}
                 >
                     {fullScreenNotice}
                 </div>
             )}
 
-            <div className='question-card'>
-                <div className='question-display' style={{
-                    fontSize: '4rem',
-                    margin: '30px 0',
-                    fontFamily: "'Courier New', monospace",
-                    display: 'flex',
-                    alignItems: 'flex-start', // improved alignment
-                    justifyContent: 'center',
-                    gap: '2px', // closer gap
-                    animation: 'fadeIn 1s ease-in',
-                    lineHeight: '1'
+            {/* Main content block — single bordered container */}
+            <div style={{
+                background: '#ffffff',
+                borderRadius: '20px',
+                padding: '0',
+                border: '2.5px solid #a3b899',
+                overflow: 'hidden',
+                marginBottom: '30px',
+            }}>
+                {/* Question display */}
+                <div style={{
+                    padding: '28px 20px 20px',
+                    textAlign: 'center',
+                    borderBottom: '1px solid #f0f0f0',
                 }}>
-                    <span style={{ fontWeight: 'bold' }}>{question.base}</span>
-                    <sup style={{
-                        color: '#ff4757',
-                        fontSize: '2rem',
-                        top: '-0.2em', // Adjusted relative position
-                        position: 'relative'
-                    }}>{question.exponent}</sup>
-                    <span style={{ marginLeft: '10px' }}> = ?</span>
-                </div>
+                    <div style={{
+                        fontSize: '3.2rem',
+                        fontFamily: "'Courier New', monospace",
+                        fontWeight: 'bold',
+                        color: '#333',
+                        display: 'inline-flex',
+                        alignItems: 'flex-start',
+                        gap: '2px',
+                        lineHeight: '1',
+                    }}>
+                        <span>{question.base}</span>
+                        <sup style={{
+                            color: '#43a047',
+                            fontSize: '1.6rem',
+                            position: 'relative',
+                            top: '-0.15em',
+                            fontWeight: 700,
+                        }}>{question.exponent}</sup>
+                        <span style={{ marginLeft: '12px', color: '#bbb' }}> = ?</span>
+                    </div>
 
-                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                    <button
-                        onClick={() => setShowExplain(!showExplain)}
-                        className="btn"
-                        style={{
-                            background: showExplain ? '#e0e0e0' : '#4a90e2',
-                            color: showExplain ? '#333' : 'white',
-                            fontSize: '0.9rem',
-                            padding: '8px 16px',
-                            border: 'none',
-                            borderRadius: '20px',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        {showExplain ? 'Hide Explanation' : '👀 Show Visual Explanation'}
-                    </button>
+                    <div style={{ marginTop: '14px' }}>
+                        <button
+                            onClick={() => setShowExplain(!showExplain)}
+                            style={{
+                                background: showExplain ? '#f5f5f5' : '#2e7d32',
+                                color: showExplain ? '#666' : 'white',
+                                fontSize: '0.82rem',
+                                padding: '7px 18px',
+                                border: showExplain ? '1px solid #e0e0e0' : 'none',
+                                borderRadius: '20px',
+                                cursor: 'pointer',
+                                fontWeight: 500,
+                            }}
+                        >
+                            {showExplain ? 'Hide Explanation' : 'Show Visual Explanation'}
+                        </button>
+                    </div>
                 </div>
 
                 {showExplain && (
@@ -394,17 +506,9 @@ export default function Practice() {
                                 base={question.base}
                                 exponent={question.exponent}
                                 onAllPotsFilled={() => {
-                                    if (isSubmitting) return; // Prevent double submission
+                                    if (isSubmitting) return;
                                     setGardenComplete(true);
-
-                                    // Derive studentAnswer conceptually
-                                    let derivedAnswer = 1;
-                                    for (let i = 0; i < question.exponent; i++) {
-                                        derivedAnswer *= question.base;
-                                    }
-
-                                    // Auto-Submit to Backend
-                                    handleSubmission(derivedAnswer.toString());
+                                    // Do NOT auto-submit — let the student enter their answer
                                 }}
                                 showPlants={showPlants}
                                 showFlower={showFlower && (result ? result.isCorrect : true)}
@@ -448,15 +552,93 @@ export default function Practice() {
                                         }}
                                     >
                                         {Array(question.exponent).fill(question.base).join(" \u00d7 ")}
-                                        {showResult && result && (
+                                        {showResult && result ? (
                                             <span className="fade-in" style={{
                                                 marginLeft: '20px',
                                                 color: result.isCorrect ? '#1b5e20' : '#d32f2f'
                                             }}>
                                                 = {result.correctAnswer}
                                             </span>
+                                        ) : (
+                                            <span style={{ marginLeft: '20px', color: '#999' }}>
+                                                = ?
+                                            </span>
                                         )}
                                     </div>
+                                )}
+
+                                {/* Student Answer Input - shown after expression, before result */}
+                                {showExpression && !showResult && (
+                                    <form
+                                        onSubmit={async (e) => {
+                                            e.preventDefault();
+                                            if (!answer.trim()) return;
+                                            await handleSubmission(answer);
+                                            // After submission completes, reveal result and summary
+                                            setShowResult(true);
+                                            setTimeout(() => setShowSummary(true), 2000);
+                                        }}
+                                        className="fade-in"
+                                        style={{
+                                            marginTop: '25px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            gap: '15px'
+                                        }}
+                                    >
+                                        <label style={{
+                                            color: '#2d6a4f',
+                                            fontSize: '1.2rem',
+                                            fontWeight: '600'
+                                        }}>
+                                            What is the answer? 🌻
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={answer}
+                                            onChange={(e) => setAnswer(e.target.value)}
+                                            placeholder=""
+                                            autoFocus
+                                            style={{
+                                                fontSize: '2rem',
+                                                fontFamily: "'Courier New', monospace",
+                                                textAlign: 'center',
+                                                padding: '12px 24px',
+                                                borderRadius: '16px',
+                                                border: '3px solid #c8e6c9',
+                                                backgroundColor: '#fafff5',
+                                                color: '#2d6a4f',
+                                                width: '200px',
+                                                outline: 'none',
+                                                boxShadow: '0 4px 10px rgba(0,0,0,0.04)',
+                                                transition: 'border-color 0.3s ease'
+                                            }}
+                                            onFocus={(e) => e.target.style.borderColor = '#66bb6a'}
+                                            onBlur={(e) => e.target.style.borderColor = '#c8e6c9'}
+                                        />
+                                        <button
+                                            type="submit"
+                                            className="btn"
+                                            disabled={isSubmitting || !answer.trim()}
+                                            style={{
+                                                background: isSubmitting ? '#ccc' : '#2d6a4f',
+                                                color: 'white',
+                                                padding: '12px 40px',
+                                                borderRadius: '30px',
+                                                fontSize: '1.1rem',
+                                                fontWeight: 'bold',
+                                                border: 'none',
+                                                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                                                boxShadow: '0 4px 12px rgba(45, 106, 79, 0.3)',
+                                                transition: 'transform 0.2s, background 0.3s'
+                                            }}
+                                            onMouseOver={(e) => { if (!isSubmitting) e.currentTarget.style.transform = 'scale(1.03)'; }}
+                                            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                        >
+                                            {isSubmitting ? 'Checking...' : '🌿 Check My Answer'}
+                                        </button>
+                                    </form>
                                 )}
 
                                 {showResult && (
@@ -483,12 +665,24 @@ export default function Practice() {
                             <ScreenCapture onEndCapture={handleScreenCapture}>
                                 {({ onStartCapture }) => (
                                     <div style={{ textAlign: 'center' }}>
-                                        <GardenCardView
-                                            base={question.base}
-                                            exponent={question.exponent}
-                                            result={result}
-                                            feedbackMessage={feedbackMessage}
-                                        />
+                                        {isAutoSaving && (
+                                            <div style={{
+                                                fontSize: '0.9rem',
+                                                color: '#558b2f',
+                                                marginBottom: '10px',
+                                                fontStyle: 'italic'
+                                            }}>
+                                                Saving your Garden Card... 📸
+                                            </div>
+                                        )}
+                                        <div ref={cardRef}>
+                                            <GardenCardView
+                                                base={question.base}
+                                                exponent={question.exponent}
+                                                result={result}
+                                                feedbackMessage={feedbackMessage}
+                                            />
+                                        </div>
                                         <button
                                             onClick={onStartCapture}
                                             className="btn"
@@ -536,6 +730,21 @@ export default function Practice() {
                                                         >
                                                             ⬇️ Download
                                                         </a>
+                                                        <button
+                                                            onClick={() => navigate('/gallery')}
+                                                            className="btn"
+                                                            style={{
+                                                                background: '#dcedc8',
+                                                                color: '#2d6a4f',
+                                                                padding: '8px 20px',
+                                                                borderRadius: '20px',
+                                                                fontSize: '0.9rem',
+                                                                border: '1px solid #c8e6c9',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                        >
+                                                            🖼️ View Gallery
+                                                        </button>
                                                         <button
                                                             onClick={() => setLastCaptureImage('')}
                                                             className="btn"

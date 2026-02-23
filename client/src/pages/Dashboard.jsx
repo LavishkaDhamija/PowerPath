@@ -100,12 +100,23 @@ export default function Dashboard() {
                 </div>
             )}
 
-            <div className='dashboard-actions'>
+            <div className='dashboard-actions' style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
                 <button
                     onClick={() => navigate('/practice')}
                     className='btn btn-primary btn-large'
                 >
                     {stats.totalAttempts === 0 ? 'Start First Session' : 'Continue Practice'}
+                </button>
+                <button
+                    onClick={() => navigate('/gallery')}
+                    className='btn btn-large'
+                    style={{
+                        background: 'var(--success-soft)',
+                        color: 'var(--success-text)',
+                        border: '2px solid var(--success-soft)'
+                    }}
+                >
+                    🌻 My Garden Gallery
                 </button>
             </div>
         </div>
